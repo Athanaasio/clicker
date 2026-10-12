@@ -50,7 +50,7 @@ h2{font:500 11px/1 var(--f-display);letter-spacing:.09em;text-transform:uppercas
 .row input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:0}
 .check{display:flex;gap:8px;align-items:center;font-size:13.5px;cursor:pointer}
 .check input{accent-color:var(--accent);width:16px;height:16px;margin:0}
-.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{appearance:none;border:0;background:transparent;color:var(--ink);font:500 13px var(--f-body);padding:8px 4px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
@@ -92,6 +92,8 @@ section>h2::after{content:"";width:7px;height:7px;border-right:1.5px solid curre
 section.closed>h2::after{transform:rotate(45deg);margin:0 3px 3px 0}
 section.closed>*:not(h2){display:none}
 .prow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center}
+.crow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13.5px}
+.crow small{color:var(--muted);font:400 12px var(--f-mono)}
 .prow b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prow small{display:block;color:var(--muted);font:400 11.5px var(--f-mono)}
 #dlmsg{font-size:13px;color:var(--muted)}
@@ -150,9 +152,10 @@ section.closed>*:not(h2){display:none}
       <input type="file" id="file2" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg" hidden>
       <div id="relBox" class="controls" hidden>
         <div class="seg" id="rsrc">
-          <button type="button" data-v="dark">Тёмное</button><button type="button" data-v="light">Светлое</button><button type="button" data-v="sil">Силуэт</button>
+          <button type="button" data-v="dark">Тёмное</button><button type="button" data-v="light">Светлое</button><button type="button" data-v="sil">Силуэт</button><button type="button" data-v="color">Цвета</button>
         </div>
         <div id="g-rel" class="controls"></div>
+        <div id="palette" class="controls"></div>
       </div>
       <div class="sub">Надписи</div>
       <div class="chips" id="chips"></div>
@@ -252,7 +255,7 @@ if(!window.THREE||!CL){ $('msgs').innerHTML='<div class="msg">Не загруз�
 const st={shape:'heart',size:46,margin:0,round:1,cham:0.4,n:5,depth:0.5,aspect:0.7,thr:50,inv:false,
   sock:14.1,trim:false,capIn:1,topT:1.6,skirt:4.5,crossT:0.05,
   att:'lug',ang:135,holeD:4,ringW:2.5,lugT:3,shift:0,img:null,imgName:'',imgPaths:null,
-  dmode:'emboss',dh:0.6,rel:false,rsrc:'dark',rthr:50,rScale:100,rx:0,ry:0,relRings:null,imgStat:null,
+  dmode:'emboss',ncol:4,cbase:0,colGroups:null,colPalette:null,colBase:'',dh:0.6,rel:false,rsrc:'dark',rthr:50,rScale:100,rx:0,ry:0,relRings:null,imgStat:null,
   sws:[{dx:0,dy:0,rot:0,cap:'body',csize:17}],scur:0,stemKit:false,
   recess:0,rimW:1.6,gap:0.4,smooth:2,speck:0.1,puff:0,dpuff:0,dsep:false,jL:'none',jR:'none',jT:'none',jB:'none',jgap:0.2,
   texts:[{text:'КЛИК',font:0,size:8,x:0,y:3,rot:0,sample:true}],cur:0};
@@ -352,10 +355,13 @@ function solid(zs,regions){
 function levels(list){ const a=[...list].sort((x,y)=>x-y), o=[]; for(const z of a) if(!o.length||z-o[o.length-1]>1e-4) o.push(z); return o; }
 
 /* ---------- the clicker ---------- */
-function decorPaths(o){ const out=[];
-  if(o.rel&&o.relRings){ const k=o.size*o.rScale/100; for(const r of o.relRings) out.push(r.map(([x,y])=>P(x*k+o.rx,y*k+o.ry))); }
+function decorGroups(o){ // artwork split into groups: one per printed colour
+  const k=o.size*o.rScale/100, tr=rings=>rings.map(r=>r.map(([x,y])=>P(x*k+o.rx,y*k+o.ry))), out=[], tp=[];
+  if(o.rel){ if(o.rsrc==='color'&&o.colGroups) o.colGroups.forEach((g,i)=>{ if(g.rings.length) out.push({key:'c'+(g.pi+1),paths:tr(g.rings),color:g.rgb}); });
+    else if(o.relRings) out.push({key:'art',paths:tr(o.relRings)}); }
   for(const t of o.texts){ if(!t._rings) continue; const a=t.rot*PI/180, c=Math.cos(a), s=Math.sin(a);
-    for(const r of t._rings) out.push(r.map(([x,y])=>P((x*c-y*s)*t.size+t.x,(x*s+y*c)*t.size+t.y))); }
+    for(const r of t._rings) tp.push(r.map(([x,y])=>P((x*c-y*s)*t.size+t.x,(x*s+y*c)*t.size+t.y))); }
+  if(tp.length){ if(out.length&&out[0].key==='art') out[0].paths.push(...tp); else out.push({key:'text',paths:tp}); }
   return out; }
 const FLOOR=1.2, PLATE=1.5, STEP=0.2, POST=4.0, STEM_TOP=10.6, PITCH=19.05;
 function layout(n){ const cols=n<=3?n:n===4?2:3, rows=Math.ceil(n/cols), out=[];
@@ -373,7 +379,7 @@ const postOf=(cx,cy,rot,t)=>dif([circle(cx,cy,2.8,48)],crossOf(cx,cy,rot,t));
 function capOutline(o,w,p){ // free-form keycap: its own figure, centred on the switch
   const u=w.cap==='image'?o.imgPaths:SHAPES[w.cap]?normalize([SHAPES[w.cap].f({n:5,depth:0.5,aspect:1})]):null; if(!u) return [];
   const c=largest(uni(u.map(r=>r.map(([x,y])=>P(p.x+x*w.csize,p.y+y*w.csize))))).S, a=off(off(c,-0.8),0.8); return a.length?largest(a).S:c; }
-function buildCap(o,C,p,DgAll,info,merge){ // z=0 at its lowest point, the flat face is at z=Hc; a dome and raised artwork go above it
+function buildCap(o,C,p,groups,info,merge){ // z=0 at its lowest point, the flat face is at z=Hc; a dome and raised artwork go above it
   const cx=p.x, cy=p.y, rot=p.rot, D=Math.max(o.skirt,POST), Hc=D+o.topT;
   if(!C.length||area(dif([circle(cx,cy,3.4,32)],C))>0.01) return null;
   const np=Math.round(o.topT/STEP), nDome=Math.round(o.puff/STEP), cc=nDome?0:Math.min(o.cham,Math.floor((o.topT-0.4)/STEP+1e-6)*STEP);
@@ -383,27 +389,34 @@ function buildCap(o,C,p,DgAll,info,merge){ // z=0 at its lowest point, the flat 
   const Rc=nDome?pole(pts(C[0])).d*0.92:0, byD=new Map(), EMPTY=[];
   const ins=(base,map,d)=>{ d=Math.round(d*100)/100; if(!map.has(d)) map.set(d,d>0?off(base,-d):base); return map.get(d); };
   const T=j=>{ if(j>=nDome) return EMPTY; if(j<0) return ins(C,byD,Math.max(0,(j+0.5)*STEP+cc)); const u=(j+0.5)/nDome; return ins(C,byD,Rc*(1-Math.sqrt(1-u*u))); };
-  let Dg=[], nd=0; const emb=o.dmode==='emboss';
-  if(DgAll.length){ const dh=emb?o.dh:Math.min(o.dh,Math.floor((o.topT-0.6)/STEP+1e-6)*STEP); nd=Math.round(dh/STEP);
-    if(nd>0) Dg=bool(CL.ClipType.ctIntersection,DgAll,off(C,-(cc+0.6)));
+  const emb=o.dmode==='emboss', gs=[]; let Dg=[], nd=0;
+  if(groups.length){ const dh=emb?o.dh:Math.min(o.dh,Math.floor((o.topT-0.6)/STEP+1e-6)*STEP); nd=Math.round(dh/STEP);
+    if(nd>0){ const clip=off(C,-(cc+0.6)); for(const g of groups){ const d=bool(CL.ClipType.ctIntersection,g.D,clip); if(d.length) gs.push({key:g.key,color:g.color,D:d,byG:new Map(),part:[]}); }
+      Dg=gs.length?uni(gs.flatMap(g=>g.D)):[]; }
     if(!emb&&dh<o.dh-1e-6) info.push('Глубина рисунка ограничена '+f1(dh)+' мм: под ним должно остаться 0,6 мм верха. Чтобы вдавить глубже, увеличьте толщину верха колпачка.');
     if(!Dg.length) nd=0; }
-  const byG=new Map(), G=k=>{ if(!(o.dpuff>0)) return Dg; const u=(k+0.5)/nd; return ins(Dg,byG,o.dpuff*(1-Math.sqrt(1-u*u))); };
+  const G=(g,k)=>{ if(!(o.dpuff>0)) return g.D; const u=(k+0.5)/nd; return ins(g.D,g.byG,o.dpuff*(1-Math.sqrt(1-u*u))); };
   const zs=[], regs=[], add=(z0,z1,R)=>{ if(regs.length&&regs[regs.length-1]===R) zs[zs.length-1]=z1; else{ if(!zs.length) zs.push(z0); regs.push(R); zs.push(z1); } };
   const lv=levels([0,D,D-POST].concat(o.skirt>0?[D-o.skirt]:[])), both=o.skirt>0?uni(skirt,post):post;
   for(let i=0;i<lv.length-1;i++){ const zm=(lv[i]+lv[i+1])/2, a=zm>D-o.skirt, b=zm>D-POST; add(lv[i],lv[i+1],a&&b?both:a?skirt:post); }
-  const part=[], jmax=nDome+(emb?nd:0)-1; // artwork kept as its own solid: raised decor, or the flush inlay
+  const jmax=nDome+(emb?nd:0)-1; // each colour group is kept as its own solid: raised decor, or the flush inlay
   for(let j=-np;j<=jmax;j++){ const base=T(j), z0=Hc+j*STEP, z1=z0+STEP; let main=base;
-    if(nd&&emb){ if(j>=0){ let u=[];
-        for(let k=0;k<nd;k++){ const src=j-1-k; if(src<0){ const g=G(k); if(g.length) u=u.length?uni(u,g):g; break; } if(src>=nDome) continue; const g=bool(CL.ClipType.ctIntersection,G(k),T(src)); if(g.length) u=u.length?uni(u,g):g; }
-        const dec=u.length?(base.length?dif(u,base):u):EMPTY; if(merge){ if(dec.length) main=base.length?uni(base,dec):dec; } else part.push([z0,z1,dec]); } }
+    if(nd&&emb){ if(j>=0){ const all=[];
+        for(const g of gs){ let u=[];
+          for(let k=0;k<nd;k++){ const src=j-1-k; if(src<0){ const a=G(g,k); if(a.length) u=u.length?uni(u,a):a; break; } if(src>=nDome) continue; const a=bool(CL.ClipType.ctIntersection,G(g,k),T(src)); if(a.length) u=u.length?uni(u,a):a; }
+          const dec=u.length?(base.length?dif(u,base):u):EMPTY; if(merge) all.push(...dec); else g.part.push([z0,z1,dec]); }
+        if(merge&&all.length) main=base.length?uni(base,all):uni(all); } }
     else if(nd&&j>=-nd){ const up=T(j+nd), cutR=dif(base,Dg); main=up.length?uni(cutR,up):cutR;
-      if(o.dmode==='inlay'){ const fill=bool(CL.ClipType.ctIntersection,Dg,base); part.push([z0,z1,up.length?dif(fill,up):fill]); } }
+      if(o.dmode==='inlay') for(const g of gs){ const fill=bool(CL.ClipType.ctIntersection,g.D,base); g.part.push([z0,z1,up.length?dif(fill,up):fill]); } }
     if(j<nDome||main.length) add(z0,z1,main); }
-  while(part.length&&!part[0][2].length) part.shift(); while(part.length&&!part[part.length-1][2].length) part.pop();
-  let ptri=null; if(part.length){ const pz=[part[0][0]], pr=[]; for(const [a,b,R] of part){ if(pr.length&&pr[pr.length-1]===R) pz[pz.length-1]=b; else{ pr.push(R); pz.push(b); } } ptri=solid(pz,pr); }
-  return {tri:solid(zs,regs),part:ptri,top:zs[zs.length-1]+(emb&&!merge&&part.length?part[part.length-1][1]-zs[zs.length-1]:0),faceUp:nDome>0||(emb&&nd>0),decor:nd>0};
+  const parts=[]; let top=zs[zs.length-1];
+  for(const g of gs){ const pl=g.part; while(pl.length&&!pl[0][2].length) pl.shift(); while(pl.length&&!pl[pl.length-1][2].length) pl.pop(); if(!pl.length) continue;
+    const pz=[pl[0][0]], pr=[]; for(const [a,b,R] of pl){ if(pr.length&&pr[pr.length-1]===R) pz[pz.length-1]=b; else{ pr.push(R); pz.push(b); } }
+    parts.push({key:g.key,color:g.color,tri:solid(pz,pr)}); top=Math.max(top,pz[pz.length-1]); }
+  return {tri:solid(zs,regs),parts,top,faceUp:nDome>0||(emb&&nd>0),decor:nd>0};
 }
+function mergeParts(caps){ const by=new Map(); for(const k of caps) for(const q of k.parts){ if(!by.has(q.key)) by.set(q.key,{key:q.key,color:q.color,list:[]}); by.get(q.key).list.push(q.tri); }
+  return [...by.values()].map(g=>({key:g.key,color:g.color,tri:cat(g.list)})); }
 function cat(list){ list=list.filter(Boolean); if(!list.length) return null; const out=new Float32Array(list.reduce((s,a)=>s+a.length,0)); let o=0; for(const a of list){ out.set(a,o); o+=a.length; } return out; }
 function buildModel(o,merge){
   const out=buildOutline(o,o.size); if(!out) return null;
@@ -474,13 +487,14 @@ function buildModel(o,merge){
   const body=solid(bz,br);
 
   // keycaps
-  const dp=decorPaths(o), DgAll=dp.length?off(off(uni(dp),-0.1),0.1):[], caps=[];
-  o.sws.forEach((w,i)=>{ if(!Cs[i]) return; const r=buildCap(o,Cs[i],ps[i],DgAll,info,merge);
+  const groups=decorGroups(o).map(g=>({...g,D:off(off(uni(g.paths),-0.1),0.1)})).filter(g=>g.D.length), caps=[];
+  for(let i=groups.length-2;i>=0;i--){ const later=uni(groups.slice(i+1).flatMap(g=>g.D)); if(later.length) groups[i].D=dif(groups[i].D,later); } // later groups (lettering) lie on top
+  o.sws.forEach((w,i)=>{ if(!Cs[i]) return; const r=buildCap(o,Cs[i],ps[i],groups,info,merge);
     if(!r) warn.push((n>1?'Колпачок свитча '+(i+1):'Колпачок')+' не получается: над штоком свитча должна быть сплошная часть фигуры. Увеличьте колпачок или сдвиньте свитч.');
     else caps.push({i,C:Cs[i],...r}); });
-  if(DgAll.length&&caps.length&&!caps.some(k=>k.decor)) info.push('Рисунок и надписи не попадают на колпачок: уменьшите их или сдвиньте к центру колпачка.');
+  if(groups.length&&caps.length&&!caps.some(k=>k.decor)) info.push('Рисунок и надписи не попадают на колпачок: уменьшите их или сдвиньте к центру колпачка.');
   const bb=bbox(uni(lug?uni(S,lug):S,tabs)), cb=caps.length?bbox(caps.flatMap(k=>k.C)):null;
-  return {body,caps,capAll:cat(caps.map(k=>k.tri)),partAll:cat(caps.map(k=>k.part)),H,Ht,Hc,top:caps.length?Math.max(...caps.map(k=>k.top)):Hc,faceUp:caps.some(k=>k.faceUp),D,sws:ps,warn,info:[...new Set(info)],bb,cb,capZ:H+STEM_TOP-D};
+  return {body,caps,capAll:cat(caps.map(k=>k.tri)),parts:mergeParts(caps),H,Ht,Hc,top:caps.length?Math.max(...caps.map(k=>k.top)):Hc,faceUp:caps.some(k=>k.faceUp),D,sws:ps,warn,info:[...new Set(info)],bb,cb,capZ:H+STEM_TOP-D};
 }
 
 /* ---------- image -> outline ---------- */
@@ -547,6 +561,27 @@ function traceImage(){
   if(!base.length){ st.imgPaths=null; st.relRings=null; return; }
   const b=ringBox(base), k=1/Math.max(b.w,b.h), nf=p=>p.map(([x,y])=>[(x-b.cx)*k,(y-b.cy)*k]);
   st.imgPaths=polys.length?polys.map(nf):null; st.relRings=rel.length?rel.map(nf):null;
+  st.colGroups=null; st.colPalette=null; st.colBase='';
+  if(st.rsrc==='color'){ // k-means over the figure's pixels: the biggest colour stays the keycap, the rest become separate parts
+    let K=Math.max(2,Math.min(4,st.ncol|0)); const smp=[]; const lin=v=>{ v/=255; return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4; }, fl=t=>t>0.008856?Math.cbrt(t):7.787*t+16/116;
+    const lab3=(r,g,b,R,G,B)=>{ const R_=lin(r),G_=lin(g),B_=lin(b), X=fl((0.4124*R_+0.3576*G_+0.1805*B_)/0.9505), Y=fl(0.2126*R_+0.7152*G_+0.0722*B_), Z=fl((0.0193*R_+0.1192*G_+0.9505*B_)/1.089); return [116*Y-16,500*(X-Y),200*(Y-Z),R,G,B]; };
+    const flat=i=>{ const a=(d[i]-d[i+4])**2+(d[i+1]-d[i+5])**2+(d[i+2]-d[i+6])**2, j=i+w*4, b=(d[i]-d[j])**2+(d[i+1]-d[j+1])**2+(d[i+2]-d[j+2])**2; return a<900&&b<900; }; // skip anti-aliased edge pixels when learning colours
+    for(let y=0;y<h-1;y+=2) for(let x=0;x<w-1;x+=2) if(sil(x,y)){ const i=(y*w+x)*4; if(flat(i)) smp.push(lab3(d[i],d[i+1],d[i+2],d[i],d[i+1],d[i+2])); }
+    if(smp.length>=K){ const dd=(a,b)=>(a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2;
+      const far=ce=>{ let bi=0,bd=-1; for(let i=0;i<smp.length;i+=3){ let m=1e9; for(const c of ce) m=Math.min(m,dd(smp[i],c)); if(m>bd){bd=m;bi=i;} } return {q:smp[bi].slice(),d:bd}; };
+      const kmeans=ce=>{ for(let it=0;it<10;it++){ const sum=ce.map(()=>[0,0,0,0,0,0,0]); for(const q of smp){ let bk=0,bm=1e9; ce.forEach((c,k)=>{ const m=dd(q,c); if(m<bm){bm=m;bk=k;} }); const t_=sum[bk]; for(let z=0;z<6;z++) t_[z]+=q[z]; t_[6]++; }
+        sum.forEach((t_,k)=>{ if(t_[6]) ce[k]=t_.slice(0,6).map(v=>v/t_[6]); }); } return ce; };
+      let ce=[smp[Math.floor(smp.length/2)].slice()]; while(ce.length<K){ const f=far(ce); if(f.d<144) break; ce.push(f.q); }
+      // two near-identical shades (an outline and a pupil in slightly different blacks) waste a filament: merge them and give the slot to the most different colour left
+      for(let round=0;round<4;round++){ ce=kmeans(ce); let pair=null; for(let a=0;a<ce.length&&!pair;a++) for(let b=a+1;b<ce.length;b++) if(dd(ce[a],ce[b])<144){ pair=[a,b]; break; }
+        if(!pair) break; ce.splice(pair[1],1); const f=far(ce); if(f.d>=144) ce.push(f.q); }
+      const rgbOf=ce.map(c=>[c[3],c[4],c[5]]); K=ce.length;
+      const lab=new Int8Array(w*h).fill(-1), cnt=new Array(K).fill(0);
+      for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(sil(x,y)){ const i=(y*w+x)*4, q=lab3(d[i],d[i+1],d[i+2],0,0,0); let bk=0,bm=1e9; ce.forEach((c,k)=>{ const m=dd(q,c); if(m<bm){bm=m;bk=k;} }); lab[y*w+x]=bk; cnt[bk]++; }
+      const tot=cnt.reduce((a,b)=>a+b,0)||1, ord=ce.map((c,k)=>k).sort((a,b)=>cnt[b]-cnt[a]), hex=c=>'#'+c.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
+      st.colPalette=ord.map(k=>({rgb:hex(rgbOf[k]),share:cnt[k]/tot})); if(!(st.cbase>=0&&st.cbase<K)) st.cbase=0;
+      st.colBase=st.colPalette[st.cbase].rgb;
+      st.colGroups=ord.map((k,pi)=>({k,pi})).filter(o=>o.pi!==st.cbase).map(({k,pi})=>({pi,rgb:st.colPalette[pi].rgb,rings:exRings(trace((x,y)=>lab[y*w+x]===k),Math.max(minA*0.3,6),0.7).map(fin).map(nf)})); } }
 }
 
 /* ---------- lettering: draw with the browser font, trace the bitmap ---------- */
@@ -576,7 +611,7 @@ const bodyM=new THREE.Mesh(new THREE.BufferGeometry(),mat($('col-body').value)),
 const swAll=new THREE.Group(), swPool=[], swDark=mat('#2c313c'), swRed=mat('#c8392f');
 function mkSw(){ const g=new THREE.Group(), mv=new THREE.Group(), hs=new THREE.Mesh(new THREE.BoxGeometry(13.9,13.9,6.6),swDark); hs.position.z=3.3;
   const s1=new THREE.Mesh(new THREE.BoxGeometry(4,1.2,7),swRed), s2=new THREE.Mesh(new THREE.BoxGeometry(1.2,4,7),swRed); s1.position.z=s2.position.z=6.7; mv.add(s1,s2); g.add(hs,mv); swAll.add(g); return {g,mv}; }
-const capG=new THREE.Group(), inM=new THREE.Mesh(new THREE.BufferGeometry(),mat($('col-dec').value)); capG.add(capM,inM); root.add(bodyM,capG,swAll);
+const capG=new THREE.Group(), partMs=new Map(); capG.add(capM); root.add(bodyM,capG,swAll);
 let model=null, orbit={th:-0.7,ph:1.0,r:150,ty:8}, pressT=-1;
 function place(){ if(!model) return; const dz=(pressT>=0?-4*Math.sin(PI*Math.min(1,pressT)):0), expl=$('c-exp').checked?14:0, L=model.sws;
   capG.position.z=model.capZ+dz+expl; swAll.visible=$('c-sw').checked; while(swPool.length<L.length) swPool.push(mkSw());
@@ -600,7 +635,11 @@ $('press').onclick=()=>{ if(pressT>=0) return; const t0=performance.now(); const
 $('c-sw').onchange=draw; $('c-exp').onchange=draw;
 $('col-body').oninput=e=>{ bodyM.material.color.set(e.target.value); draw(); };
 $('col-cap').oninput=e=>{ capM.material.color.set(e.target.value); draw(); };
-$('col-dec').oninput=e=>{ inM.material.color.set(e.target.value); draw(); };
+const partColor=k=>k==='art'||k==='text'?$('col-dec').value:((st.colGroups||[]).find(g=>'c'+(g.pi+1)===k)||{}).rgb||$('col-dec').value;
+function setParts(list){ for(const m of partMs.values()) m.visible=false;
+  for(const q of list||[]){ let m=partMs.get(q.key); if(!m){ m=new THREE.Mesh(new THREE.BufferGeometry(),mat(partColor(q.key))); partMs.set(q.key,m); capG.add(m); } setGeo(m,q.tri); m.material.color.set(partColor(q.key)); } }
+function recolor(){ for(const [k,m] of partMs) m.material.color.set(partColor(k)); if(st.rel&&st.rsrc==='color'&&st.colBase){ capM.material.color.set(st.colBase); $('col-cap').value=st.colBase; } draw(); }
+$('col-dec').oninput=recolor;
 
 /* ---------- rebuild ---------- */
 const f1=v=>v.toFixed(1).replace('.',',');
@@ -609,17 +648,17 @@ function rebuild(){
   let m=null; try{ m=buildModel(st); }catch(err){ console.error(err); }
   model=m; const box=$('msgs'); box.textContent='';
   const say=(t,info)=>{ const d=document.createElement('div'); d.className='msg'+(info?' info':''); d.textContent=t; box.append(d); };
-  if(!m){ setGeo(bodyM,null); setGeo(capM,null); setGeo(inM,null); $('dims').textContent=''; $('tri').textContent='';
+  if(!m){ setGeo(bodyM,null); setGeo(capM,null); setParts(null); $('dims').textContent=''; $('tri').textContent='';
     say(st.shape==='image'?'Контур не найден. Подвигайте порог или включите инверсию.':'Не удалось построить фигуру с такими параметрами.'); $('dl').disabled=true; draw(); return; }
-  setGeo(bodyM,m.body); setGeo(capM,m.capAll); setGeo(inM,m.partAll);
+  setGeo(bodyM,m.body); setGeo(capM,m.capAll); setParts(m.parts); recolor();
   const nk=m.caps.length, kit=st.stemKit?' Добавлены stem-cutter.stl (резак под шток свитча) и stem-post.stl (готовая ножка).':'';
-  const emb=st.dmode==='emboss', sep=!!m.partAll&&(st.dmode==='inlay'||st.dsep);
+  const emb=st.dmode==='emboss', sep=m.parts.length>0&&(st.dmode==='inlay'||st.dsep), multi=m.parts.length>1;
   $('printnote').textContent=(nk===0?'В архиве только корпус body.stl, колпачков нет.'
     :'В архиве body.stl и '+(nk>1?nk+' колпачков (keycap-1.stl и далее)':'keycap.stl')+'. '+(m.faceUp?'Надутые колпачки и колпачки с выпуклым рисунком лежат лицом вверх, под ними нужны поддержки.':'Колпачки уже перевёрнуты лицом на стол, всё печатается без поддержек.')
-      +(sep?' Рисунок лежит отдельными файлами ('+(emb?'decor':'inlay')+' в имени): откройте колпачок и его рисунок в слайсере как части одной детали и назначьте рисунку свой цвет.':''))+kit;
+      +(sep?(multi?' Каждый цвет рисунка лежит своим файлом (c2, c3… и text в имени), список цветов в readme.txt. Откройте колпачок и все его цвета в слайсере как части одной детали и назначьте каждой части свою катушку.':' Рисунок лежит отдельными файлами ('+(emb?'decor':'inlay')+' в имени): откройте колпачок и его рисунок в слайсере как части одной детали и назначьте рисунку свой цвет.'):''))+kit;
   m.warn.forEach(t=>say(t)); m.info.forEach(t=>say(t,true)); $('dl').disabled=false;
   $('dims').innerHTML='корпус <b>'+f1(m.bb.w)+' × '+f1(m.bb.h)+' × '+f1(m.Ht)+'</b> мм'+(nk===1?'<br>колпачок <b>'+f1(m.cb.w)+' × '+f1(m.cb.h)+' × '+f1(m.top)+'</b> мм':nk>1?'<br>колпачков <b>'+nk+'</b>, высота <b>'+f1(m.top)+'</b> мм':'');
-  $('tri').textContent=Math.round((m.body.length+(m.capAll?m.capAll.length:0)+(m.partAll?m.partAll.length:0))/9).toLocaleString('ru-RU')+' треуг.';
+  $('tri').textContent=Math.round((m.body.length+(m.capAll?m.capAll.length:0)+m.parts.reduce((s,q)=>s+q.tri.length,0))/9).toLocaleString('ru-RU')+' треуг.';
   const key=st.shape+'|'+Math.round(Math.max(m.bb.w,m.bb.h)/8); if(key!==lastFit){ lastFit=key; orbit.r=Math.max(110,Math.max(m.bb.w,m.bb.h)*3.1); orbit.ty=(m.H+10)/2; }
   draw(); if(booted) autosave();
 }
@@ -634,7 +673,7 @@ const SL={ // key:[group,label,min,max,step,unit,digits]
   sock:['sw','Гнездо под свитч',14,14.4,0.05,'мм',2],
   dh:['dec','Глубина или высота рисунка',0.2,4,0.2,'мм',1], dpuff:['dec','Надуть рисунок',0,3,0.1,'мм',1],
   smooth:['shape','Сглаживание трассировки',0,6,1,'',0], speck:['shape','Убрать мелкие детали',0,3,0.05,'%',2],
-  rthr:['rel','Порог рисунка',5,95,1,'%',0], rScale:['rel','Размер рисунка',20,150,5,'%',0], rx:['rel','Сдвиг рисунка по X',-30,30,0.5,'мм',1], ry:['rel','Сдвиг рисунка по Y',-30,30,0.5,'мм',1],
+  rthr:['rel','Порог рисунка',5,95,1,'%',0], ncol:['rel','Количество цветов вместе с колпачком',2,4,1,'',0], rScale:['rel','Размер рисунка',20,150,5,'%',0], rx:['rel','Сдвиг рисунка по X',-30,30,0.5,'мм',1], ry:['rel','Сдвиг рисунка по Y',-30,30,0.5,'мм',1],
   tsize:['txt','Размер шрифта',3,30,0.5,'мм',1], tx:['txt','Сдвиг надписи по X',-40,40,0.5,'мм',1], ty:['txt','Сдвиг надписи по Y',-40,40,0.5,'мм',1], trot:['txt','Поворот надписи',-180,180,5,'°',0],
   recess:['cap','Утопить колпачок в корпус',0,12,0.5,'мм',1], rimW:['cap','Стенка бортика',1.2,3,0.2,'мм',1], gap:['cap','Зазор вокруг колпачка',0.2,0.8,0.1,'мм',1],
   jgap:['join','Зазор в пазах',0.1,0.4,0.05,'мм',2],
@@ -649,10 +688,10 @@ for(const k in SL){ const [g,label,min,max,step,unit,dg]=SL[k], row=document.cre
   $('g-'+g).append(row); rows[k]=row; const inp=row.querySelector('input'), o=row.querySelector('output');
   const show=()=>{ o.textContent=Number(getV(k)).toFixed(dg).replace('.',',')+(unit?' '+unit:''); };
   inp.value=getV(k); show(); row._sync=()=>{ inp.value=getV(k); show(); };
-  inp.addEventListener('input',()=>{ setV(k,parseFloat(inp.value)); show(); if(k==='thr'||k==='rthr'||k==='smooth'||k==='speck') traceImage(); if(k==='recess'){ const v=rows.capIn.hidden; if(v!==(st.recess>0)){ rows.capIn.hidden=!v; rows.rimW.hidden=rows.gap.hidden=v; } } schedule(); }); }
+  inp.addEventListener('input',()=>{ setV(k,parseFloat(inp.value)); show(); if(k==='ncol'){ st.cbase=0; traceImage(); syncUI(); } if(k==='thr'||k==='rthr'||k==='smooth'||k==='speck') traceImage(); if(k==='recess'){ const v=rows.capIn.hidden; if(v!==(st.recess>0)){ rows.capIn.hidden=!v; rows.rimW.hidden=rows.gap.hidden=v; } } schedule(); }); }
 function syncUI(){
   const s=st.shape, vis={n:['star','poly','flower'].includes(s),depth:['star','flower'].includes(s),aspect:['circle','rect'].includes(s),thr:s==='image'&&!!st.img,
-    ang:st.att!=='none',holeD:st.att!=='none',shift:st.att!=='none',ringW:st.att==='lug',lugT:st.att==='lug',rthr:st.rsrc!=='sil'&&!!st.img,smooth:!!st.img,speck:!!st.img,dpuff:st.dmode==='emboss',capIn:!(st.recess>0),rimW:st.recess>0,gap:st.recess>0,csize:!['body','none'].includes(curS().cap)};
+    ang:st.att!=='none',holeD:st.att!=='none',shift:st.att!=='none',ringW:st.att==='lug',lugT:st.att==='lug',rthr:!['sil','color'].includes(st.rsrc)&&!!st.img,ncol:st.rsrc==='color'&&!!st.img,smooth:!!st.img,speck:!!st.img,dpuff:st.dmode==='emboss',capIn:!(st.recess>0),rimW:st.recess>0,gap:st.recess>0,csize:!['body','none'].includes(curS().cap)};
   for(const k in vis) rows[k].hidden=!vis[k];
   $('invWrap').hidden=s!=='image'||!st.img;
   document.querySelectorAll('#tiles .tile').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===s));
@@ -675,7 +714,13 @@ function syncUI(){
   document.querySelectorAll('#joinRows button').forEach(b=>b.setAttribute('aria-pressed',st[b.dataset.k]===b.dataset.v));
   document.querySelectorAll('#dmode button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.dmode));
   document.querySelectorAll('#rsrc button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.rsrc));
-  { const art=!!(st.img||st.relRings); $('c-rel').disabled=!art; $('c-rel').checked=art&&st.rel; $('relBox').hidden=!(art&&st.rel); $('rsrc').hidden=!st.img; } $('relLoad').textContent=st.img?'Заменить рисунок':'Загрузить рисунок';
+  { const art=!!(st.img||st.relRings); $('c-rel').disabled=!art; $('c-rel').checked=art&&st.rel; $('relBox').hidden=!(art&&st.rel); $('rsrc').hidden=!st.img;
+    const pal=$('palette'); pal.textContent=''; if(art&&st.rel&&st.rsrc==='color'&&st.colPalette) st.colPalette.forEach((c,i)=>{ const r=document.createElement('div'); r.className='crow';
+      const sw=document.createElement('input'); sw.type='color'; sw.className='swatch'; const g=(st.colGroups||[]).find(x=>x.pi===i); sw.value=i===st.cbase?st.colBase:(g?g.rgb:c.rgb); sw.setAttribute('aria-label','Цвет '+(i+1));
+      sw.oninput=()=>{ if(i===st.cbase) st.colBase=sw.value; else if(g) g.rgb=sw.value; recolor(); };
+      const t=document.createElement('div'); t.innerHTML=''; const b=document.createElement('span'); b.textContent=i===st.cbase?'Колпачок':'Цвет '+(i+1)+(g&&!g.rings.length?' (слишком мелкий)':''); const sm=document.createElement('small'); sm.textContent=' '+Math.round(c.share*100)+'%'; t.append(b,sm);
+      const bt=document.createElement('button'); bt.type='button'; bt.className='btn'; bt.textContent=i===st.cbase?'Основа':'Сделать основой'; bt.disabled=i===st.cbase||!st.img; bt.onclick=()=>{ st.cbase=i; traceImage(); syncUI(); schedule(); };
+      r.append(sw,t,bt); pal.append(r); }); } $('relLoad').textContent=st.img?'Заменить рисунок':'Загрузить рисунок';
   const chips=$('chips'); chips.textContent='';
   st.texts.forEach((t,i)=>{ const c=document.createElement('span'); c.className='chip'; c.dataset.on=i===st.cur?'1':'0';
     const a=document.createElement('button'); a.type='button'; a.textContent=t.text.trim()||'пусто'; a.setAttribute('aria-pressed',i===st.cur); a.onclick=()=>{ st.cur=i; syncUI(); };
@@ -715,7 +760,10 @@ async function takeFile(file,asShape){
   if(!file) return; if(asShape===undefined||st.shape==='image') asShape=true;
   try{ st.img=await readImage(file); }catch(err){ $('dropTitle').textContent='Не удалось открыть файл'; $('dropSub').textContent='Подойдут PNG, JPG, WebP и SVG без внешних ссылок.'; return; }
   st.inv=false; $('c-inv').checked=false; st.thr=50; st.rthr=50; st.rsrc='sil'; traceImage();
-  { const q=st.imgStat||{dark:0,holes:false}; if(q.dark>0.04&&q.dark<0.96){ st.rsrc='dark'; st.rel=true; traceImage(); } else st.rel=!asShape||q.holes; }
+  { const q=st.imgStat||{dark:0,holes:false}; st.rsrc='color'; st.ncol=4; st.cbase=0; traceImage();
+    const vivid=(st.colPalette||[]).filter(c=>c.share>0.04).length;
+    if(vivid>=3){ st.rel=true; st.dmode='inlay'; }
+    else if(q.dark>0.04&&q.dark<0.96){ st.rsrc='dark'; st.rel=true; traceImage(); } else { st.rsrc='sil'; st.rel=!asShape||q.holes; traceImage(); } }
   st.rx=st.ry=0; st.rScale=asShape?100:60;
   st.texts=st.texts.filter(t=>!t.sample); st.cur=Math.min(st.cur,st.texts.length-1); // the sample lettering would otherwise fill gaps of the artwork
   st.imgName=file.name;
@@ -735,7 +783,7 @@ $('relLoad').onclick=()=>$('file2').click();
 $('file2').onchange=e=>{ takeFile(e.target.files[0],false); e.target.value=''; };
 $('c-rel').onchange=e=>{ st.rel=e.target.checked; syncUI(); schedule(); };
 document.querySelectorAll('#dmode button').forEach(b=>b.onclick=()=>{ st.dmode=b.dataset.v; syncUI(); schedule(); });
-document.querySelectorAll('#rsrc button').forEach(b=>b.onclick=()=>{ st.rsrc=b.dataset.v; traceImage(); syncUI(); schedule(); });
+document.querySelectorAll('#rsrc button').forEach(b=>b.onclick=()=>{ st.rsrc=b.dataset.v; if(st.rsrc==='color'&&st.dmode==='deboss') st.dmode='inlay'; traceImage(); syncUI(); schedule(); });
 function fillFonts(){ const sel=$('t-font'); sel.textContent=''; FONTS.forEach((f,i)=>{ const o=document.createElement('option'); o.value=String(i); o.textContent=f.name; sel.append(o); }); }
 fillFonts();
 $('t-text').oninput=e=>{ const t=curT(); if(!t) return; t.text=e.target.value; t.sample=false; const b=document.querySelector('#chips .chip[data-on="1"] button'); if(b) b.textContent=t.text.trim()||'пусто'; traceText(t).then(schedule); };
@@ -772,9 +820,10 @@ function exportZip(){ const emb=st.dmode==='emboss', m=emb&&!st.dsep?buildModel(
   const files=[{name:'body.stl',data:stl(m.body,'clicker body',id)}];
   let note='Clicker for Cherry MX style switches\r\n\r\nbody.stl  '+m.bb.w.toFixed(1)+' x '+m.bb.h.toFixed(1)+' x '+m.Ht.toFixed(1)+' mm, print as is (sockets up)\r\n';
   m.caps.forEach((k,j)=>{ const nm=nk>1?'keycap-'+(k.i+1):'keycap'; files.push({name:nm+'.stl',data:stl(k.tri,'clicker keycap',cm)});
-    if(k.part) files.push({name:nm+(emb?'-decor.stl':'-inlay.stl'),data:stl(k.part,'clicker keycap artwork',cm)}); });
+    const one=k.parts.length===1&&k.parts[0].key==='art'; k.parts.forEach(q=>files.push({name:nm+(emb?'-decor':'-inlay')+(one?'':'-'+q.key)+'.stl',data:stl(q.tri,'clicker keycap artwork',cm)})); });
   if(nk) note+='keycap*.stl  '+nk+' pcs, '+m.top.toFixed(1)+' mm tall, '+(m.faceUp?'domed or raised artwork: face up, needs supports under the cap':'already flipped: face on the bed')+'\r\n';
-  if(m.partAll) note+=(emb?'*-decor.stl  raised artwork':'*-inlay.stl  artwork flush with the face')+': load together with its keycap as parts of one object and give it its own colour\r\n';
+  if(m.parts.length){ note+=(emb?'*-decor*.stl  raised artwork':'*-inlay*.stl  artwork flush with the face')+': load together with its keycap as parts of one object and give each part its own filament\r\n';
+    if(st.rel&&st.rsrc==='color'&&st.colBase) note+='  keycap body colour: '+st.colBase+'\r\n'; m.parts.forEach(q=>{ note+='  '+q.key+': '+(q.key==='text'||q.key==='art'?$('col-dec').value:partColor(q.key))+'\r\n'; }); }
   if(st.stemKit){ const t=st.crossT; files.push({name:'stem-cutter.stl',data:stl(solid([-0.2,POST],[crossOf(0,0,0,t)]),'mx stem cutter',id)},{name:'stem-post.stl',data:stl(solid([0,POST],[postOf(0,0,0,t)]),'mx stem post',id)});
     note+='stem-cutter.stl  MX cross, 4 mm deep (z 0..4, plus 0.2 mm below). Subtract it from the underside of your own keycap, or load it as a negative volume in the slicer. Needs at least 5.6 mm of solid material around it.\r\nstem-post.stl  ready post with the cross already cut (5.6 mm wide, 4 mm tall). Join it to the underside of your own keycap instead of cutting.\r\nThe lower end of the post (the open end of the cross) faces the switch and rests about 6.6 mm above the switch plate; the keycap travels 4 mm down.\r\n'; }
   note+='\r\nLayer 0.2 mm. Switch socket '+st.sock.toFixed(2)+' mm, stem clearance '+st.crossT.toFixed(2)+' mm.\r\nIf the switch is loose or the keycap is too tight, change those two values and export again.\r\n';
@@ -789,12 +838,13 @@ $('dl').onclick=()=>{ if(model) saveFile('clicker-stl.zip',exportZip(),$('dlmsg'
 
 /* ---------- projects: autosave, named saves, project file, share link ---------- */
 const DEF=JSON.parse(JSON.stringify(st,(k,v)=>k==='img'||k[0]==='_'?undefined:v));
-const PKEYS=Object.keys(DEF).filter(k=>!['texts','sws','imgPaths','relRings','imgStat','cur','scur'].includes(k));
+const PKEYS=Object.keys(DEF).filter(k=>!['texts','sws','imgPaths','relRings','imgStat','cur','scur','colGroups','colPalette','colBase'].includes(k));
 const LS={get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }};
 function snapshot(withImg){ const o={v:1,s:{}}; for(const k of PKEYS) o.s[k]=st[k];
   o.texts=st.texts.map(t=>({text:t.text,font:t.font<DEFFONTS?t.font:0,size:t.size,x:t.x,y:t.y,rot:t.rot,sample:!!t.sample}));
   o.sws=st.sws.map(w=>({dx:w.dx,dy:w.dy,rot:w.rot,cap:w.cap,csize:w.csize}));
   const q=r=>r?r.map(p=>p.flatMap(([x,y])=>[Math.round(x*10000),Math.round(y*10000)])):null; o.ip=q(st.imgPaths); o.rr=q(st.relRings);
+  if(st.colGroups) o.cg=st.colGroups.map(g=>({pi:g.pi,c:g.rgb,r:q(g.rings)})); if(st.colPalette) o.cp=st.colPalette; o.cb=st.colBase;
   if(withImg&&st.img&&st.img.small) o.img=st.img.small; return o; }
 const DEFFONTS=FONTS.length, BLANK=snapshot(false);
 async function applyProject(o){ if(!o||typeof o!=='object'||!o.s) return false;
@@ -802,8 +852,10 @@ async function applyProject(o){ if(!o||typeof o!=='object'||!o.s) return false;
   st.texts=(Array.isArray(o.texts)?o.texts:[]).slice(0,20).map(t=>({text:String(t.text||'').slice(0,40),font:(t.font|0)>=0&&(t.font|0)<FONTS.length?(t.font|0):0,size:+t.size||8,x:+t.x||0,y:+t.y||0,rot:+t.rot||0,sample:!!t.sample}));
   st.sws=(Array.isArray(o.sws)?o.sws:[]).slice(0,9).map(w=>({dx:+w.dx||0,dy:+w.dy||0,rot:+w.rot||0,cap:String(w.cap||'body'),csize:+w.csize||17})); if(!st.sws.length) st.sws=[{dx:0,dy:0,rot:0,cap:'body',csize:17}];
   const uq=r=>Array.isArray(r)&&r.length?r.map(f=>{ const p=[]; for(let i=0;i+1<f.length;i+=2) p.push([f[i]/10000,f[i+1]/10000]); return p; }).filter(p=>p.length>=3):null;
-  st.imgPaths=uq(o.ip); st.relRings=uq(o.rr); st.img=null; st.imgStat=null; st.cur=st.texts.length?0:-1; st.scur=0;
+  st.imgPaths=uq(o.ip); st.relRings=uq(o.rr);
+  st.colGroups=Array.isArray(o.cg)?o.cg.map(g=>({pi:g.pi|0,rgb:/^#[0-9a-f]{6}$/i.test(g.c)?g.c:'#888888',rings:uq(g.r)||[]})):null; st.colPalette=Array.isArray(o.cp)?o.cp.filter(c=>c&&/^#[0-9a-f]{6}$/i.test(c.rgb)).map(c=>({rgb:c.rgb,share:+c.share||0})):null; st.colBase=typeof o.cb==='string'&&/^#[0-9a-f]{6}$/i.test(o.cb)?o.cb:''; st.img=null; st.imgStat=null; st.cur=st.texts.length?0:-1; st.scur=0;
   if(typeof o.img==='string'&&o.img.startsWith('data:image/')){ try{ st.img=await imgFromUrl(o.img); }catch(e){} }
+  if(st.rsrc==='color'&&!st.colGroups&&!st.img) st.rsrc='sil';
   if(!SHAPES[st.shape]&&!(st.shape==='image'&&st.imgPaths)) st.shape='heart';
   st.sws.forEach(w=>{ const ok=w.cap==='none'||(w.cap==='body'&&st.sws.length===1)||!!SHAPES[w.cap]||(w.cap==='image'&&st.imgPaths); if(!ok) w.cap='rect'; });
   $('c-trim').checked=st.trim; $('c-inv').checked=st.inv;
@@ -840,7 +892,7 @@ document.querySelectorAll('.controls>section>h2').forEach((h,i)=>{ const sec=h.p
   const set=c=>{ sec.classList.toggle('closed',c); h.setAttribute('aria-expanded',String(!c)); }; set(window.matchMedia('(max-width:820px)').matches&&i>0);
   h.onclick=()=>set(!sec.classList.contains('closed')); h.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); h.onclick(); } }; });
 
-window.__clicker={snapshot,applyProject,encodeLink,decodeLink,uni,off,ex,decorPaths,get orbit(){return orbit;},draw,buildOutline,swPos,fits,pts,pole,addSwitch,state:st,traceText,schedule,syncUI,get model(){return model;},buildModel,exportZip,takeFile};
+window.__clicker={decorGroups,snapshot,applyProject,encodeLink,decodeLink,uni,off,ex,get orbit(){return orbit;},draw,buildOutline,swPos,fits,pts,pole,addSwitch,state:st,traceText,schedule,syncUI,get model(){return model;},buildModel,exportZip,takeFile};
 syncUI(); rebuild(); listProjects();
 (async()=>{ await Promise.all(st.texts.map(traceText)); schedule();
   if(!(await loadFromHash())){ const cur=LS.get('clicker.current'); if(cur) await applyProject(cur); }
