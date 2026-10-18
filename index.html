@@ -54,6 +54,9 @@ h2{font:500 11px/1 var(--f-display);letter-spacing:.09em;text-transform:uppercas
 .seg button{appearance:none;border:0;background:transparent;color:var(--ink);font:500 13px var(--f-body);padding:8px 4px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg.seg3{grid-auto-flow:row;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line)}
+.seg.seg3 button{background:var(--panel);border-left:0}
+.seg.seg3 button[aria-pressed="true"]{background:var(--accent)}
 .btn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;font:500 13.5px var(--f-body);padding:8px 12px;cursor:pointer}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600;padding:11px 16px}
@@ -175,6 +178,20 @@ section.closed>*:not(h2){display:none}
       <button class="btn" id="autofit" type="button">Минимальный размер под свитч</button>
     </section>
     <section>
+      <h2>Стенки корпуса</h2>
+      <div class="sub" style="margin-top:0;padding-top:0;border-top:0">Узор на боковых стенках</div>
+      <div class="seg seg3" id="wtexSeg">
+        <button type="button" data-v="none">Гладкие</button><button type="button" data-v="ribs">Рёбра</button><button type="button" data-v="rings">Кольца</button><button type="button" data-v="weave">Плетение</button><button type="button" data-v="knurl">Ромбы</button><button type="button" data-v="twist">Витые</button>
+      </div>
+      <div id="g-tex" class="controls"></div>
+      <div class="sub">Ободок по верхнему краю</div>
+      <div class="seg seg3" id="rimSeg">
+        <button type="button" data-v="none">Нет</button><button type="button" data-v="smooth">Гладкий</button><button type="button" data-v="rope">Канат</button><button type="button" data-v="braid">Коса</button><button type="button" data-v="beads">Бусины</button><button type="button" data-v="ribs">Рёбра</button>
+      </div>
+      <div id="g-rim" class="controls"></div>
+      <p class="hint" id="texJoinHint" hidden>На стенках с шипом или пазом узор вдавлен внутрь, а ободок там не выступает: кликеры по-прежнему стыкуются вплотную.</p>
+    </section>
+    <section>
       <h2>Крепление для брелока</h2>
       <div class="seg" id="att">
         <button type="button" data-v="none">Нет</button><button type="button" data-v="lug">Проушина</button><button type="button" data-v="hole">Отверстие</button>
@@ -257,6 +274,7 @@ const st={shape:'heart',size:46,margin:0,round:1,cham:0.4,n:5,depth:0.5,aspect:0
   att:'lug',ang:135,holeD:4,ringW:2.5,lugT:3,shift:0,img:null,imgName:'',imgPaths:null,
   dmode:'emboss',ncol:4,cbase:0,colGroups:null,colPalette:null,colBase:'',dh:0.6,rel:false,rsrc:'dark',rthr:50,rScale:100,rx:0,ry:0,relRings:null,imgStat:null,
   sws:[{dx:0,dy:0,rot:0,cap:'body',csize:17}],scur:0,stemKit:false,
+  wtex:'none',wDepth:0.8,wPitch:4,wRow:3,rimStyle:'none',rimH:3,rimOut:1.2,rimPitch:4,
   recess:0,rimW:1.6,gap:0.4,smooth:2,speck:0.1,puff:0,dpuff:0,dsep:false,jL:'none',jR:'none',jT:'none',jB:'none',jgap:0.2,
   texts:[{text:'КЛИК',font:0,size:8,x:0,y:3,rot:0,sample:true}],cur:0};
 
@@ -350,7 +368,27 @@ function solid(zs,regions){
     if(i===n-1) cap(R,z1,true);
     else if(regions[i+1]!==R){ cap(dif(R,regions[i+1]),z1,true); cap(dif(regions[i+1],R),z1,false); }
   }
-  return new Float32Array(T);
+  return FIXT?fixT(T):new Float32Array(T);
+}
+let FIXT=false; // the T-junction repair is slow, so only exported meshes get it
+function fixT(T){ // split triangles at vertices that sit on their horizontal edges (T-junctions between wall layers and caps), so the mesh closes for the slicer
+  const n=T.length/9, K=v=>Math.round(v*1000), key=i=>K(T[i])+','+K(T[i+1])+','+K(T[i+2]), E=new Map();
+  for(let t=0;t<n;t++) for(let e=0;e<3;e++){ const a=key(t*9+e*3), b=key(t*9+((e+1)%3)*3); E.set(a+'|'+b,(E.get(a+'|'+b)||0)+1); }
+  const cand=new Map(), seen=new Set(), G=0.5;
+  for(const [k,c] of E){ const [a,b]=k.split('|'); if((E.get(b+'|'+a)||0)===c) continue;
+    for(const v of [a,b]){ if(seen.has(v)) continue; seen.add(v); const [x,y,z]=v.split(',').map(Number), ck=Math.floor(x/1000/G)+','+Math.floor(y/1000/G)+','+z; if(!cand.has(ck)) cand.set(ck,[]); cand.get(ck).push([x/1000,y/1000]); } }
+  if(!cand.size) return new Float32Array(T);
+  const out=[];
+  const onEdge=(ax,ay,bx,by,z)=>{ const zk=K(z), dx=bx-ax, dy=by-ay, l2=dx*dx+dy*dy; if(l2<1e-8) return null; let best=null, bt=1;
+    for(let i=Math.floor(Math.min(ax,bx)/G);i<=Math.floor(Math.max(ax,bx)/G);i++) for(let j=Math.floor(Math.min(ay,by)/G);j<=Math.floor(Math.max(ay,by)/G);j++){ const L=cand.get(i+','+j+','+zk); if(!L) continue;
+      for(const [px,py] of L){ const t=((px-ax)*dx+(py-ay)*dy)/l2; if(t<=1e-4||t>=1-1e-4) continue; const ex=ax+t*dx-px, ey=ay+t*dy-py; if(ex*ex+ey*ey>1e-6) continue; if(t<bt){ bt=t; best=[px,py]; } } }
+    return best; };
+  const emit=(A,B,C,depth)=>{ if(depth<40){ const V=[A,B,C];
+      for(let e=0;e<3;e++){ const P0=V[e], P1=V[(e+1)%3], P2=V[(e+2)%3]; if(Math.abs(P0[2]-P1[2])>1e-6) continue; const q=onEdge(P0[0],P0[1],P1[0],P1[1],P0[2]);
+        if(q){ const M=[q[0],q[1],P0[2]]; emit(P0,M,P2,depth+1); emit(M,P1,P2,depth+1); return; } } }
+    out.push(A[0],A[1],A[2],B[0],B[1],B[2],C[0],C[1],C[2]); };
+  for(let t=0;t<n;t++){ const o=t*9; emit([T[o],T[o+1],T[o+2]],[T[o+3],T[o+4],T[o+5]],[T[o+6],T[o+7],T[o+8]],0); }
+  return new Float32Array(out);
 }
 function levels(list){ const a=[...list].sort((x,y)=>x-y), o=[]; for(const z of a) if(!o.length||z-o[o.length-1]>1e-4) o.push(z); return o; }
 
@@ -418,6 +456,44 @@ function buildCap(o,C,p,groups,info,merge){ // z=0 at its lowest point, the flat
 function mergeParts(caps){ const by=new Map(); for(const k of caps) for(const q of k.parts){ if(!by.has(q.key)) by.set(q.key,{key:q.key,color:q.color,list:[]}); by.get(q.key).list.push(q.tri); }
   return [...by.values()].map(g=>({key:g.key,color:g.color,tri:cat(g.list)})); }
 function cat(list){ list=list.filter(Boolean); if(!list.length) return null; const out=new Float32Array(list.reduce((s,a)=>s+a.length,0)); let o=0; for(const a of list){ out.set(a,o); o+=a.length; } return out; }
+/* ---------- body wall texture and top rim: per-layer outline pushed along the wall normal ---------- */
+const TEXW={ ribs:(s,z,P,h)=>Math.pow(0.5+0.5*Math.cos(2*PI*s/P),1.5),
+  rings:(s,z,P,h)=>Math.pow(0.5+0.5*Math.cos(2*PI*z/h),1.5),
+  weave:(s,z,P,h)=>{ const r=Math.floor(z/h), f=z/h-r; return Math.pow(Math.sin(PI*f),0.6)*(0.3+0.7*(0.5+0.5*Math.cos(2*PI*s/P+PI*r))); },
+  knurl:(s,z,P,h)=>{ const tri=v=>1-Math.abs(2*(v-Math.floor(v))-1); return Math.min(tri(s/P+z/h),tri(s/P-z/h)); },
+  twist:(s,z,P,h)=>Math.pow(0.5+0.5*Math.cos(2*PI*(s/P+z/h)),1.5) };
+const tube=f=>Math.sqrt(Math.max(0,1-(2*f-1)**2));
+const TEXR={ smooth:()=>1,
+  rope:(s,f,P)=>tube(f)*(0.55+0.45*(0.5+0.5*Math.cos(2*PI*(s/P+f)))),
+  braid:(s,f,P)=>tube(f)*(0.5+0.5*(0.5+0.5*Math.cos(2*PI*(s/P+Math.abs(2*f-1)*0.75)))),
+  beads:(s,f,P)=>{ const u=s/P-Math.floor(s/P); return Math.sqrt(tube(f)*tube(u)); },
+  ribs:(s,f,P)=>0.55+0.45*Math.pow(0.5+0.5*Math.cos(2*PI*s/P),1.5) };
+function bodyTexture(o,S,Ht,J,keepFn){
+  const wOn=!!TEXW[o.wtex], rOn=!!TEXR[o.rimStyle]; if(!(wOn||rOn)||!S.length) return null;
+  const q=pts(S[0]), m=q.length; let A=0, L=0; const cum=[0];
+  for(let i=0;i<m;i++){ const a=q[i], b=q[(i+1)%m]; A+=a.x*b.y-b.x*a.y; L+=Math.hypot(b.x-a.x,b.y-a.y); cum.push(L); }
+  const sg=A>0?1:-1, ds=Math.min(0.45,o.wPitch/10,o.rimPitch/10), n=Math.max(80,Math.min(1600,Math.round(L/ds)));
+  const px=new Float64Array(n), py=new Float64Array(n), nx=new Float64Array(n), ny=new Float64Array(n), inv=new Uint8Array(n);
+  for(let k=0,e=0;k<n;k++){ const t=k*L/n; while(cum[e+1]<t) e++; const a=q[e], b=q[(e+1)%m], u=(t-cum[e])/((cum[e+1]-cum[e])||1); px[k]=a.x+(b.x-a.x)*u; py[k]=a.y+(b.y-a.y)*u; }
+  for(let k=0;k<n;k++){ const a=(k+n-2)%n, b=(k+2)%n, tx=px[b]-px[a], ty=py[b]-py[a], l=Math.hypot(tx,ty)||1; nx[k]=sg*ty/l; ny[k]=-sg*tx/l;
+    if(J) inv[k]=(J.R&&nx[k]>0.5)||(J.L&&nx[k]<-0.5)||(J.T&&ny[k]>0.5)||(J.B&&ny[k]<-0.5)?1:0; }
+  const b=bbox(S), Pw=L/Math.max(1,Math.round(L/o.wPitch)), Pr=L/Math.max(1,Math.round(L/o.rimPitch)), amp=o.wDepth, out=o.rimOut;
+  const zr0=rOn?Math.max(0.4,Ht-o.rimH):Ht+1, zw0=Math.max(0.6,o.cham+0.2), zw1=rOn?zr0:Ht-Math.max(0.4,o.cham);
+  const N=Math.ceil(Ht/STEP-1e-6), id=new Int32Array(N), poly=[null]; let prev=null;
+  for(let j=0;j<N;j++){ const zc=(j+0.5)*STEP, d=new Float64Array(n); let any=false, neg=false, same=!!prev;
+    for(let k=0;k<n;k++){ const s=k*L/n; let v=0;
+      if(rOn&&zc>=zr0){ v=out*TEXR[o.rimStyle](s,(zc-zr0)/o.rimH,Pr); if(inv[k]) v-=out; }
+      else if(wOn&&zc>=zw0&&zc<zw1){ v=amp*TEXW[o.wtex](s,zc,Pw,o.wRow); if(inv[k]) v-=amp; }
+      if(prev) v=Math.min(v,prev[k]+STEP); // never steeper than 45 degrees: prints without supports
+      d[k]=v; if(Math.abs(v)>1e-4) any=true; if(v<-1e-4) neg=true; if(same&&Math.abs(v-prev[k])>1e-5) same=false; }
+    prev=d;
+    if(!any){ id[j]=0; continue; } if(same&&j>0&&id[j-1]){ id[j]=id[j-1]; continue; }
+    const path=[]; for(let k=0;k<n;k++){ let x=px[k]+nx[k]*d[k], y=py[k]+ny[k]*d[k];
+      if(J){ if(J.R) x=Math.min(x,b.x1); if(J.L) x=Math.max(x,b.x0); if(J.T) y=Math.min(y,b.y1); if(J.B) y=Math.max(y,b.y0); } path.push(P(x,y)); }
+    let R=uni([path]); R=neg?uni(R,keepFn()):uni(R,S);
+    poly.push(R); id[j]=poly.length-1; }
+  return {n:N,id,poly};
+}
 function buildModel(o,merge){
   const out=buildOutline(o,o.size); if(!out) return null;
   const S=out.S, q=pts(S[0]), warn=[], info=[];
@@ -471,20 +547,26 @@ function buildModel(o,merge){
     if(slots.length&&area(bool(CL.ClipType.ctIntersection,off(uni(slots),0.8),pocket))>0.01) warn.push('Паз прорезает гнездо свитча: увеличьте размер кликера, между пазом и гнездом нужна стенка.');
     if(slots.length&&hole&&area(bool(CL.ClipType.ctIntersection,off(uni(slots),0.8),hole))>0.01) warn.push('Паз задевает отверстие под кольцо: перенесите отверстие.'); }
   const lugT=Math.min(o.lugT,Ht), lugFull=lug&&lugT>=Ht-1e-6;
+  const jSides=o.shape==='rect'?{R:o.jR!=='none',L:o.jL!=='none',T:o.jT!=='none',B:o.jB!=='none'}:null;
+  let keep=null; const needKeep=()=>keep||(keep=bool(CL.ClipType.ctIntersection,S,uni([...off(pocket,WALL),...(slots.length?off(uni(slots),1):[]),...(tabs.length?off(uni(tabs),1):[]),...(hole?off(hole,1.2):[]),...(well?off(well,1):[])])));
+  const tex=bodyTexture(o,S,Ht,jSides,needKeep);
+  if(tex&&jSides&&(jSides.R||jSides.L||jSides.T||jSides.B)) info.push('На стенках с шипом или пазом узор вдавлен внутрь, ободок там не выступает: кликеры стыкуются вплотную.');
 
   // body
   const c=o.cham, nc=Math.round(c/STEP), cache=new Map();
-  const outer=(withLug,wt,d)=>{ const k=(withLug?'L':'S')+(wt?'T':'')+d; if(!cache.has(k)){ let b=withLug?uni(S,lug):S; if(wt) b=uni(b,tabs); cache.set(k,d>0?off(b,-d):b); } return cache.get(k); };
+  const outer=(withLug,wt,d,tid)=>{ const k=(withLug?'L':'S')+(wt?'T':'')+d+'t'+tid; if(!cache.has(k)){ let b=tid?tex.poly[tid]:S; if(withLug) b=uni(b,lug); if(wt) b=uni(b,tabs); cache.set(k,d>0?off(b,-d):b); } return cache.get(k); };
   const zl=[0,FLOOR,H-PLATE,H,Ht]; for(let k=1;k<=nc;k++){ zl.push(k*STEP); zl.push(Ht-c+(k-1)*STEP); }
   if(lug&&!lugFull) zl.push(lugT);
   if(tabs.length) zl.push(zj-0.3);
+  if(tex) for(let k=1;k<tex.n;k++) zl.push(k*STEP);
   const bz=levels(zl), rc=new Map(), br=[];
   for(let i=0;i<bz.length-1;i++){ const zm=(bz[i]+bz[i+1])/2, d=Math.round(Math.max(0,c-zm,zm-(Ht-c))*100)/100, wl=!!lug&&(lugFull||zm<lugT);
-    const zone=zm<FLOOR?0:zm<H-PLATE?1:zm<H?2:3, wt=tabs.length>0&&zm<zj-0.3, key=d+'|'+wl+'|'+zone+'|'+wt;
+    const zone=zm<FLOOR?0:zm<H-PLATE?1:zm<H?2:3, wt=tabs.length>0&&zm<zj-0.3, tid=tex?tex.id[Math.min(tex.n-1,Math.floor(zm/STEP))]:0, key=d+'|'+wl+'|'+zone+'|'+wt+'|'+tid;
     if(!rc.has(key)){ const cuts=[]; if(hole) cuts.push(hole[0]); if(zone===1) cuts.push(...pocket); if(zone===2) cuts.push(...plate); if(zone===3&&well) cuts.push(...well); if(zone<2) cuts.push(...slots);
-      const Rg=outer(wl,wt,d); rc.set(key,cuts.length?dif(Rg,cuts):Rg); }
+      const Rg=outer(wl,wt,d,tid); rc.set(key,cuts.length?dif(Rg,cuts):Rg); }
     br.push(rc.get(key)); }
-  const body=solid(bz,br);
+  const cz=[bz[0]], cr=[]; br.forEach((R,i)=>{ if(cr.length&&cr[cr.length-1]===R) cz[cz.length-1]=bz[i+1]; else{ cr.push(R); cz.push(bz[i+1]); } }); // merge equal slabs
+  const body=solid(cz,cr);
 
   // keycaps
   const groups=decorGroups(o).map(g=>({...g,D:off(off(uni(g.paths),-0.1),0.1)})).filter(g=>g.D.length), caps=[];
@@ -493,7 +575,7 @@ function buildModel(o,merge){
     if(!r) warn.push((n>1?'Колпачок свитча '+(i+1):'Колпачок')+' не получается: над штоком свитча должна быть сплошная часть фигуры. Увеличьте колпачок или сдвиньте свитч.');
     else caps.push({i,C:Cs[i],...r}); });
   if(groups.length&&caps.length&&!caps.some(k=>k.decor)) info.push('Рисунок и надписи не попадают на колпачок: уменьшите их или сдвиньте к центру колпачка.');
-  const bb=bbox(uni(lug?uni(S,lug):S,tabs)), cb=caps.length?bbox(caps.flatMap(k=>k.C)):null;
+  const bb=bbox([...uni(lug?uni(S,lug):S,tabs),...(tex?tex.poly.filter(Boolean).flat():[])]), cb=caps.length?bbox(caps.flatMap(k=>k.C)):null;
   return {body,caps,capAll:cat(caps.map(k=>k.tri)),parts:mergeParts(caps),H,Ht,Hc,top:caps.length?Math.max(...caps.map(k=>k.top)):Hc,faceUp:caps.some(k=>k.faceUp),D,sws:ps,warn,info:[...new Set(info)],bb,cb,capZ:H+STEM_TOP-D};
 }
 
@@ -677,6 +759,8 @@ const SL={ // key:[group,label,min,max,step,unit,digits]
   tsize:['txt','Размер шрифта',3,30,0.5,'мм',1], tx:['txt','Сдвиг надписи по X',-40,40,0.5,'мм',1], ty:['txt','Сдвиг надписи по Y',-40,40,0.5,'мм',1], trot:['txt','Поворот надписи',-180,180,5,'°',0],
   recess:['cap','Утопить колпачок в корпус',0,12,0.5,'мм',1], rimW:['cap','Стенка бортика',1.2,3,0.2,'мм',1], gap:['cap','Зазор вокруг колпачка',0.2,0.8,0.1,'мм',1],
   jgap:['join','Зазор в пазах',0.1,0.4,0.05,'мм',2],
+  wDepth:['tex','Глубина узора',0.2,2,0.1,'мм',1], wPitch:['tex','Шаг по кругу',2,12,0.5,'мм',1], wRow:['tex','Высота ряда',1.5,8,0.5,'мм',1],
+  rimH:['rim','Высота ободка',1,6,0.5,'мм',1], rimOut:['rim','Выступ ободка',0.4,3,0.1,'мм',1], rimPitch:['rim','Шаг узора ободка',2,10,0.5,'мм',1],
   capIn:['cap','Отступ от края корпуса',0,4,0.25,'мм',2], topT:['cap','Толщина верха',1.2,3,0.2,'мм',1], skirt:['cap','Высота юбки',0,6,0.5,'мм',1], crossT:['cap','Зазор крестовины',0,0.2,0.01,'мм',2], puff:['cap','Надуть колпачок',0,8,0.2,'мм',1]
 };
 const rows={}, TK={tsize:'size',tx:'x',ty:'y',trot:'rot'};
@@ -691,7 +775,7 @@ for(const k in SL){ const [g,label,min,max,step,unit,dg]=SL[k], row=document.cre
   inp.addEventListener('input',()=>{ setV(k,parseFloat(inp.value)); show(); if(k==='ncol'){ st.cbase=0; traceImage(); syncUI(); } if(k==='thr'||k==='rthr'||k==='smooth'||k==='speck') traceImage(); if(k==='recess'){ const v=rows.capIn.hidden; if(v!==(st.recess>0)){ rows.capIn.hidden=!v; rows.rimW.hidden=rows.gap.hidden=v; } } schedule(); }); }
 function syncUI(){
   const s=st.shape, vis={n:['star','poly','flower'].includes(s),depth:['star','flower'].includes(s),aspect:['circle','rect'].includes(s),thr:s==='image'&&!!st.img,
-    ang:st.att!=='none',holeD:st.att!=='none',shift:st.att!=='none',ringW:st.att==='lug',lugT:st.att==='lug',rthr:!['sil','color'].includes(st.rsrc)&&!!st.img,ncol:st.rsrc==='color'&&!!st.img,smooth:!!st.img,speck:!!st.img,dpuff:st.dmode==='emboss',capIn:!(st.recess>0),rimW:st.recess>0,gap:st.recess>0,csize:!['body','none'].includes(curS().cap)};
+    ang:st.att!=='none',holeD:st.att!=='none',shift:st.att!=='none',ringW:st.att==='lug',lugT:st.att==='lug',rthr:!['sil','color'].includes(st.rsrc)&&!!st.img,ncol:st.rsrc==='color'&&!!st.img,smooth:!!st.img,speck:!!st.img,dpuff:st.dmode==='emboss',capIn:!(st.recess>0),wDepth:st.wtex!=='none',wPitch:!['none','rings'].includes(st.wtex),wRow:!['none','ribs'].includes(st.wtex),rimH:st.rimStyle!=='none',rimOut:st.rimStyle!=='none',rimPitch:!['none','smooth'].includes(st.rimStyle),rimW:st.recess>0,gap:st.recess>0,csize:!['body','none'].includes(curS().cap)};
   for(const k in vis) rows[k].hidden=!vis[k];
   $('invWrap').hidden=s!=='image'||!st.img;
   document.querySelectorAll('#tiles .tile').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===s));
@@ -710,6 +794,9 @@ function syncUI(){
       if((v==='body'&&!one)||(v==='image'&&!st.imgPaths)) continue; const o=document.createElement('option'); o.value=v; o.textContent=t; sel.append(o); }
     sel.value=curS().cap; $('c-stem').checked=st.stemKit; }
   $('dsepWrap').hidden=st.dmode!=='emboss'; $('c-dsep').checked=st.dsep;
+  document.querySelectorAll('#wtexSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.wtex));
+  document.querySelectorAll('#rimSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.rimStyle));
+  $('texJoinHint').hidden=!(s==='rect'&&(st.wtex!=='none'||st.rimStyle!=='none')&&[st.jL,st.jR,st.jT,st.jB].some(v=>v!=='none'));
   $('joinBox').hidden=s!=='rect'; $('joinHint').hidden=s==='rect';
   document.querySelectorAll('#joinRows button').forEach(b=>b.setAttribute('aria-pressed',st[b.dataset.k]===b.dataset.v));
   document.querySelectorAll('#dmode button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.dmode));
@@ -736,6 +823,8 @@ for(const [k,name] of [['jL','Слева'],['jR','Справа'],['jT','Свер
   const l=document.createElement('span'); l.textContent=name; const g=document.createElement('div'); g.className='seg'; g.setAttribute('role','group'); g.setAttribute('aria-label',name);
   for(const [v,t] of [['none','Нет'],['tab','Шип'],['slot','Паз']]){ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.dataset.k=k; b.dataset.v=v; b.onclick=()=>{ st[k]=v; syncUI(); schedule(); }; g.append(b); }
   r.append(l,g); $('joinRows').append(r); }
+document.querySelectorAll('#wtexSeg button').forEach(b=>b.onclick=()=>{ st.wtex=b.dataset.v; syncUI(); schedule(); });
+document.querySelectorAll('#rimSeg button').forEach(b=>b.onclick=()=>{ st.rimStyle=b.dataset.v; syncUI(); schedule(); });
 $('joinGrid').onclick=()=>{ st.jR=st.jT='tab'; st.jL=st.jB='slot'; syncUI(); schedule(); };
 const resetSw=()=>st.sws.forEach(w=>{ w.dx=w.dy=0; });
 function addSwitch(){ if(st.sws.length>=9) return;
@@ -816,7 +905,7 @@ function zip(files){ const parts=[], cd=[]; let ofs=0;
     cd.push(new Uint8Array(c.buffer),nm); ofs+=30+nm.length+f.data.length; }
   const cs=cd.reduce((s,a)=>s+a.length,0), e=new DataView(new ArrayBuffer(22)); e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,ofs,true);
   return new Blob([...parts,...cd,new Uint8Array(e.buffer)],{type:'application/zip'}); }
-function exportZip(){ const emb=st.dmode==='emboss', m=emb&&!st.dsep?buildModel(st,true):model, Hc=m.Hc, nk=m.caps.length, id=(x,y,z)=>[x,y,z], cm=m.faceUp?id:(x,y,z)=>[x,-y,Hc-z];
+function exportZip(){ const emb=st.dmode==='emboss'; let m; FIXT=true; try{ m=buildModel(st,emb&&!st.dsep); } finally{ FIXT=false; } const Hc=m.Hc, nk=m.caps.length, id=(x,y,z)=>[x,y,z], cm=m.faceUp?id:(x,y,z)=>[x,-y,Hc-z];
   const files=[{name:'body.stl',data:stl(m.body,'clicker body',id)}];
   let note='Clicker for Cherry MX style switches\r\n\r\nbody.stl  '+m.bb.w.toFixed(1)+' x '+m.bb.h.toFixed(1)+' x '+m.Ht.toFixed(1)+' mm, print as is (sockets up)\r\n';
   m.caps.forEach((k,j)=>{ const nm=nk>1?'keycap-'+(k.i+1):'keycap'; files.push({name:nm+'.stl',data:stl(k.tri,'clicker keycap',cm)});
@@ -892,7 +981,7 @@ document.querySelectorAll('.controls>section>h2').forEach((h,i)=>{ const sec=h.p
   const set=c=>{ sec.classList.toggle('closed',c); h.setAttribute('aria-expanded',String(!c)); }; set(window.matchMedia('(max-width:820px)').matches&&i>0);
   h.onclick=()=>set(!sec.classList.contains('closed')); h.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); h.onclick(); } }; });
 
-window.__clicker={decorGroups,snapshot,applyProject,encodeLink,decodeLink,uni,off,ex,get orbit(){return orbit;},draw,buildOutline,swPos,fits,pts,pole,addSwitch,state:st,traceText,schedule,syncUI,get model(){return model;},buildModel,exportZip,takeFile};
+window.__clicker={bodyTexture,decorGroups,snapshot,applyProject,encodeLink,decodeLink,uni,off,ex,get orbit(){return orbit;},draw,buildOutline,swPos,fits,pts,pole,addSwitch,state:st,traceText,schedule,syncUI,get model(){return model;},buildModel,exportZip,takeFile};
 syncUI(); rebuild(); listProjects();
 (async()=>{ await Promise.all(st.texts.map(traceText)); schedule();
   if(!(await loadFromHash())){ const cur=LS.get('clicker.current'); if(cur) await applyProject(cur); }
