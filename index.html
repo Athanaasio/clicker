@@ -136,6 +136,8 @@ section.closed>*:not(h2){display:none}
         <div><b id="dropTitle">Свой файл: PNG, JPG или SVG</b><span id="dropSub">Перетащите сюда или нажмите. Кликер повторит внешний контур.</span></div>
       </div>
       <button class="btn" id="imgClear" type="button" hidden>Убрать файл</button>
+      <div class="line"><button class="btn" id="plainBtn" type="button">Обычный кликер</button><button class="btn" id="macaron" type="button">Сделать макарун</button></div>
+      <p class="hint">«Макарун»: надутый колпачок, юбочки и «крем» между половинками. «Обычный кликер» возвращает стенки и колпачок к исходным настройкам, форму и рисунок не трогает.</p>
       <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg" hidden>
       <div id="g-shape" class="controls"></div>
       <label class="check" id="invWrap" hidden><input type="checkbox" id="c-inv">Инвертировать (контур по светлому)</label>
@@ -181,12 +183,12 @@ section.closed>*:not(h2){display:none}
       <h2>Стенки корпуса</h2>
       <div class="sub" style="margin-top:0;padding-top:0;border-top:0">Узор на боковых стенках</div>
       <div class="seg seg3" id="wtexSeg">
-        <button type="button" data-v="none">Гладкие</button><button type="button" data-v="ribs">Рёбра</button><button type="button" data-v="rings">Кольца</button><button type="button" data-v="weave">Плетение</button><button type="button" data-v="knurl">Ромбы</button><button type="button" data-v="twist">Витые</button>
+        <button type="button" data-v="none">Гладкие</button><button type="button" data-v="ribs">Рёбра</button><button type="button" data-v="rings">Кольца</button><button type="button" data-v="weave">Плетение</button><button type="button" data-v="knurl">Ромбы</button><button type="button" data-v="twist">Витые</button><button type="button" data-v="ruffle">Юбочка</button>
       </div>
       <div id="g-tex" class="controls"></div>
       <div class="sub">Ободок по верхнему краю</div>
       <div class="seg seg3" id="rimSeg">
-        <button type="button" data-v="none">Нет</button><button type="button" data-v="smooth">Гладкий</button><button type="button" data-v="rope">Канат</button><button type="button" data-v="braid">Коса</button><button type="button" data-v="beads">Бусины</button><button type="button" data-v="ribs">Рёбра</button>
+        <button type="button" data-v="none">Нет</button><button type="button" data-v="smooth">Гладкий</button><button type="button" data-v="rope">Канат</button><button type="button" data-v="braid">Коса</button><button type="button" data-v="beads">Бусины</button><button type="button" data-v="ribs">Рёбра</button><button type="button" data-v="ruffle">Юбочка</button>
       </div>
       <div id="g-rim" class="controls"></div>
       <p class="hint" id="texJoinHint" hidden>На стенках с шипом или пазом узор вдавлен внутрь, а ободок там не выступает: кликеры по-прежнему стыкуются вплотную.</p>
@@ -209,12 +211,21 @@ section.closed>*:not(h2){display:none}
     </section>
     <section>
       <h2>Свитч</h2>
+      <div class="seg" id="swType"><button type="button" data-v="mx">MX (обычный)</button><button type="button" data-v="choc">Kailh Choc (низкий)</button></div>
       <div id="g-sw" class="controls"></div>
-      <label class="check"><input type="checkbox" id="c-trim">Ножки свитча откушены (корпус тоньше на 3 мм)</label>
+      <label class="check"><input type="checkbox" id="c-trim">Ножки свитча откушены (корпус тоньше)</label>
+      <p class="hint" id="chocHint" hidden>Под Kailh Choc первой версии: гнездо 13,8 мм, пластина 1,3 мм, ход 3 мм, колпачок на двух ножках. Choc второй версии с крестовиной сюда не подходит.</p>
     </section>
     <section>
       <h2>Колпачок</h2>
+      <label class="check"><input type="checkbox" id="c-lid">Колпачок накрывает корпус, как верхняя половинка макаруна</label>
       <div id="g-cap" class="controls"></div>
+      <div class="sub">Узор на боку колпачка</div>
+      <div class="seg seg3" id="capTexSeg">
+        <button type="button" data-v="none">Нет</button><button type="button" data-v="ruffle">Юбочка</button><button type="button" data-v="ribs">Рёбра</button><button type="button" data-v="rings">Кольца</button><button type="button" data-v="weave">Плетение</button><button type="button" data-v="knurl">Ромбы</button>
+      </div>
+      <div id="g-captex" class="controls"></div>
+      <label class="check"><input type="checkbox" id="c-capone">Колпачок одним файлом вместе с рисунком (раскрасить в слайсере)</label>
     </section>
     <section id="projSec">
       <h2>Проекты</h2>
@@ -239,6 +250,7 @@ section.closed>*:not(h2){display:none}
       <canvas id="view"></canvas>
       <div class="hud"><div id="dims"></div><div id="tri"></div></div>
       <div class="tools">
+        <button class="btn" id="undoBtn" type="button" aria-label="Отменить (Ctrl+Z)" title="Отменить (Ctrl+Z)" disabled>↶</button><button class="btn" id="redoBtn" type="button" aria-label="Вернуть (Ctrl+Shift+Z)" title="Вернуть (Ctrl+Shift+Z)" disabled>↷</button>
         <button class="btn" id="press" type="button">Нажать</button>
         <label class="check"><input type="checkbox" id="c-sw" checked>Свитч</label>
         <label class="check"><input type="checkbox" id="c-exp">Разнести</label>
@@ -274,7 +286,7 @@ const st={shape:'heart',size:46,margin:0,round:1,cham:0.4,n:5,depth:0.5,aspect:0
   att:'lug',ang:135,holeD:4,ringW:2.5,lugT:3,shift:0,img:null,imgName:'',imgPaths:null,
   dmode:'emboss',ncol:4,cbase:0,colGroups:null,colPalette:null,colBase:'',dh:0.6,rel:false,rsrc:'dark',rthr:50,rScale:100,rx:0,ry:0,relRings:null,imgStat:null,
   sws:[{dx:0,dy:0,rot:0,cap:'body',csize:17}],scur:0,stemKit:false,
-  wtex:'none',wDepth:0.8,wPitch:4,wRow:3,rimStyle:'none',rimH:3,rimOut:1.2,rimPitch:4,
+  sw:'mx',lid:false,creamIn:2,bRound:0,capWide:0,capShellZ:4,capTex:'none',capTexH:2,capTexD:0.7,capOne:false,wtex:'none',wDepth:0.8,wPitch:4,wRow:3,rimStyle:'none',rimH:3,rimOut:1.2,rimPitch:4,
   recess:0,rimW:1.6,gap:0.4,smooth:2,speck:0.1,puff:0,dpuff:0,dsep:false,jL:'none',jR:'none',jT:'none',jB:'none',jgap:0.2,
   texts:[{text:'КЛИК',font:0,size:8,x:0,y:3,rot:0,sample:true}],cur:0};
 
@@ -344,9 +356,13 @@ function buildOutline(o,size){
       if(a.length===1&&area(a)>=A0*0.97){ const b=o.shape==='image'?a:off(off(a,r),-r); S=largest(b.length?b:a).S; break; } cutR=true; } }
   return {S,pieces,cutR};
 }
-const POCKET=15.6, WALL=1.2;
+const WALL=1.2, SWT={ // per switch family: pocket under the plate, plate thickness, keycap mount length, stem top above the plate, travel, keycap clearance, depth under the plate (with pins / pins trimmed)
+  mx:{POCKET:15.6,PLATE:1.5,POST:4.0,STEM_TOP:10.6,TRAVEL:4,CLEAR:15.2,BELOW:8.6,BELOW_T:5.4},
+  choc:{POCKET:15.4,PLATE:1.3,POST:3.0,STEM_TOP:5.8,TRAVEL:3,CLEAR:15.6,BELOW:5.2,BELOW_T:2.6} };
+let SW=SWT.mx, POCKET=SW.POCKET, PLATE=SW.PLATE, POST=SW.POST, STEM_TOP=SW.STEM_TOP;
+function setSw(o){ SW=SWT[o.sw]||SWT.mx; POCKET=SW.POCKET; PLATE=SW.PLATE; POST=SW.POST; STEM_TOP=SW.STEM_TOP; }
 function fits(S,cx,cy,rot){ return area(dif(off([rect(cx,cy,POCKET,POCKET,rot)],WALL),S))<0.01; }
-function autoSize(o){ let lo=16,hi=220; const ok=s=>{ const r=buildOutline(o,s); return !!r&&swPos(o,r.S,pts(r.S[0]),true).every(p=>fits(r.S,p.x,p.y,p.rot)); };
+function autoSize(o){ setSw(o); let lo=16,hi=220; const ok=s=>{ const r=buildOutline(o,s); return !!r&&swPos(o,r.S,pts(r.S[0]),true).every(p=>fits(r.S,p.x,p.y,p.rot)); };
   if(!ok(hi)) return hi; while(hi-lo>0.5){ const m=(lo+hi)/2; ok(m)?hi=m:lo=m; } return Math.ceil(hi); }
 
 /* ---------- layered solid: stack of prisms -> triangles ---------- */
@@ -379,15 +395,15 @@ function fixT(T){ // split triangles at vertices that sit on their horizontal ed
     for(const v of [a,b]){ if(seen.has(v)) continue; seen.add(v); const [x,y,z]=v.split(',').map(Number), ck=Math.floor(x/1000/G)+','+Math.floor(y/1000/G)+','+z; if(!cand.has(ck)) cand.set(ck,[]); cand.get(ck).push([x/1000,y/1000]); } }
   if(!cand.size) return new Float32Array(T);
   const out=[];
-  const onEdge=(ax,ay,bx,by,z)=>{ const zk=K(z), dx=bx-ax, dy=by-ay, l2=dx*dx+dy*dy; if(l2<1e-8) return null; let best=null, bt=1;
+  const onEdge=(ax,ay,bx,by,z,cx_,cy_)=>{ const zk=K(z), dx=bx-ax, dy=by-ay, l2=dx*dx+dy*dy; if(l2<1e-8) return null; let best=null, bt=1;
     for(let i=Math.floor(Math.min(ax,bx)/G);i<=Math.floor(Math.max(ax,bx)/G);i++) for(let j=Math.floor(Math.min(ay,by)/G);j<=Math.floor(Math.max(ay,by)/G);j++){ const L=cand.get(i+','+j+','+zk); if(!L) continue;
-      for(const [px,py] of L){ const t=((px-ax)*dx+(py-ay)*dy)/l2; if(t<=1e-4||t>=1-1e-4) continue; const ex=ax+t*dx-px, ey=ay+t*dy-py; if(ex*ex+ey*ey>1e-6) continue; if(t<bt){ bt=t; best=[px,py]; } } }
+      for(const [px,py] of L){ const t=((px-ax)*dx+(py-ay)*dy)/l2; if(t<=1e-4||t>=1-1e-4) continue; const ex=ax+t*dx-px, ey=ay+t*dy-py; if(ex*ex+ey*ey>1e-6) continue; if((px-cx_)**2+(py-cy_)**2<1e-6) continue; if(t<bt){ bt=t; best=[px,py]; } } }
     return best; };
-  const emit=(A,B,C,depth)=>{ if(depth<40){ const V=[A,B,C];
-      for(let e=0;e<3;e++){ const P0=V[e], P1=V[(e+1)%3], P2=V[(e+2)%3]; if(Math.abs(P0[2]-P1[2])>1e-6) continue; const q=onEdge(P0[0],P0[1],P1[0],P1[1],P0[2]);
+  const emit=(A,B,C,depth)=>{ if(depth<16){ const V=[A,B,C];
+      for(let e=0;e<3;e++){ const P0=V[e], P1=V[(e+1)%3], P2=V[(e+2)%3]; if(Math.abs(P0[2]-P1[2])>1e-6) continue; const q=onEdge(P0[0],P0[1],P1[0],P1[1],P0[2],P2[0],P2[1]);
         if(q){ const M=[q[0],q[1],P0[2]]; emit(P0,M,P2,depth+1); emit(M,P1,P2,depth+1); return; } } }
     out.push(A[0],A[1],A[2],B[0],B[1],B[2],C[0],C[1],C[2]); };
-  for(let t=0;t<n;t++){ const o=t*9; emit([T[o],T[o+1],T[o+2]],[T[o+3],T[o+4],T[o+5]],[T[o+6],T[o+7],T[o+8]],0); }
+  for(let t=0;t<n;t++){ if(out.length>T.length*3) return new Float32Array(T); const o=t*9; emit([T[o],T[o+1],T[o+2]],[T[o+3],T[o+4],T[o+5]],[T[o+6],T[o+7],T[o+8]],0); }
   return new Float32Array(out);
 }
 function levels(list){ const a=[...list].sort((x,y)=>x-y), o=[]; for(const z of a) if(!o.length||z-o[o.length-1]>1e-4) o.push(z); return o; }
@@ -401,7 +417,7 @@ function decorGroups(o){ // artwork split into groups: one per printed colour
     for(const r of t._rings) tp.push(r.map(([x,y])=>P((x*c-y*s)*t.size+t.x,(x*s+y*c)*t.size+t.y))); }
   if(tp.length){ if(out.length&&out[0].key==='art') out[0].paths.push(...tp); else out.push({key:'text',paths:tp}); }
   return out; }
-const FLOOR=1.2, PLATE=1.5, STEP=0.2, POST=4.0, STEM_TOP=10.6, PITCH=19.05;
+const FLOOR=1.2, STEP=0.2, PITCH=19.05;
 function layout(n){ const cols=n<=3?n:n===4?2:3, rows=Math.ceil(n/cols), out=[];
   for(let i=0;i<n;i++){ const r=Math.floor(i/cols), inRow=Math.min(cols,n-r*cols); out.push([(i%cols-(inRow-1)/2)*PITCH,((rows-1)/2-r)*PITCH]); } return out; }
 function swPos(o,S,q,zero){ // auto grid around the deepest point of the outline, plus each switch's own shift
@@ -414,29 +430,37 @@ function swPos(o,S,q,zero){ // auto grid around the deepest point of the outline
   return o.sws.map((w,i)=>({x:pc.x+L[i][0]+(zero?0:w.dx), y:pc.y+L[i][1]+(zero?0:w.dy), rot:w.rot*PI/180})); }
 const crossOf=(cx,cy,rot,t)=>uni([rect(cx,cy,4.1+2*t,1.35+2*t,rot)],[rect(cx,cy,1.35+2*t,4.1+2*t,rot)]);
 const postOf=(cx,cy,rot,t)=>dif([circle(cx,cy,2.8,48)],crossOf(cx,cy,rot,t));
+const chocPegs=(cx,cy,rot,t)=>{ const c=Math.cos(rot)*2.85, sn=Math.sin(rot)*2.85; return uni([rect(cx-c,cy-sn,1.25-2*t,3.0-2*t,rot)],[rect(cx+c,cy+sn,1.25-2*t,3.0-2*t,rot)]); }; // Choc v1: two legs that plug into the stem
+const stemOf=(cx,cy,rot,t)=>SW===SWT.choc?chocPegs(cx,cy,rot,t):postOf(cx,cy,rot,t);
+const stemFoot=(cx,cy,rot)=>SW===SWT.choc?[rect(cx,cy,7.6,3.8,rot)]:[circle(cx,cy,3.4,32)];
 function capOutline(o,w,p){ // free-form keycap: its own figure, centred on the switch
   const u=w.cap==='image'?o.imgPaths:SHAPES[w.cap]?normalize([SHAPES[w.cap].f({n:5,depth:0.5,aspect:1})]):null; if(!u) return [];
   const c=largest(uni(u.map(r=>r.map(([x,y])=>P(p.x+x*w.csize,p.y+y*w.csize))))).S, a=off(off(c,-0.8),0.8); return a.length?largest(a).S:c; }
-function buildCap(o,C,p,groups,info,merge){ // z=0 at its lowest point, the flat face is at z=Hc; a dome and raised artwork go above it
+function buildCap(o,C,p,groups,info,merge,ext){ // z=0 at its lowest point, the flat face is at z=Hc; a dome and raised artwork go above it
   const cx=p.x, cy=p.y, rot=p.rot, D=Math.max(o.skirt,POST), Hc=D+o.topT;
-  if(!C.length||area(dif([circle(cx,cy,3.4,32)],C))>0.01) return null;
+  if(!C.length||area(dif(stemFoot(cx,cy,rot),C))>0.01) return null;
+  const wide=!!(ext&&ext.Sh&&ext.Sh.length), zw=wide?ext.zw:0, Ctop=wide?ext.Sh:C; // C: lower band (fits the well), Ctop: the upper shell
   const np=Math.round(o.topT/STEP), nDome=Math.round(o.puff/STEP), cc=nDome?0:Math.min(o.cham,Math.floor((o.topT-0.4)/STEP+1e-6)*STEP);
-  const post=postOf(cx,cy,rot,o.crossT), clear=[rect(cx,cy,15.2,15.2,rot)], inner=off(C,-WALL), skirt=o.skirt>0?dif(C,uni(inner,clear)):[];
+  const post=stemOf(cx,cy,rot,o.crossT), clear=[rect(cx,cy,SW.CLEAR,SW.CLEAR,rot)], inner=off(C,-WALL), hollow=ext&&ext.lidHollow?uni(ext.lidHollow,clear):uni(inner,clear);
+  const upPrint=nDome>0||(o.dmode==='emboss'&&groups.length>0), tz0=wide?zw:Math.max(0,D-o.skirt), tx=capTexture(o,Ctop,tz0,Math.min(Hc,tz0+o.capTexH),upPrint);
+  const OUT=z=>{ if(tx){ const j=Math.floor((z-tx.z0)/STEP); if(j>=0&&j<tx.N) return tx.poly[j]; } return wide&&z<zw?C:Ctop; };
   if(o.skirt>0&&area(dif(off(clear,WALL-0.05),C))>0.01) info.push('Юбка колпачка местами прорезана, чтобы не задевать корпус свитча.');
   // T(j): cross-section of the cap top in layer j (j<0 inside the top plate, j>=0 in the dome)
-  const Rc=nDome?pole(pts(C[0])).d*0.92:0, byD=new Map(), EMPTY=[];
+  const Rc=nDome?pole(pts(Ctop[0])).d*0.92:0, byD=new Map(), EMPTY=[];
   const ins=(base,map,d)=>{ d=Math.round(d*100)/100; if(!map.has(d)) map.set(d,d>0?off(base,-d):base); return map.get(d); };
-  const T=j=>{ if(j>=nDome) return EMPTY; if(j<0) return ins(C,byD,Math.max(0,(j+0.5)*STEP+cc)); const u=(j+0.5)/nDome; return ins(C,byD,Rc*(1-Math.sqrt(1-u*u))); };
+  const T=j=>{ if(j>=nDome) return EMPTY; if(j<0){ const zc=Hc+(j+0.5)*STEP, t=OUT(zc); return t!==Ctop?t:ins(Ctop,byD,Math.max(0,(j+0.5)*STEP+cc)); } const u=(j+0.5)/nDome; return ins(Ctop,byD,Rc*(1-Math.sqrt(1-u*u))); };
   const emb=o.dmode==='emboss', gs=[]; let Dg=[], nd=0;
   if(groups.length){ const dh=emb?o.dh:Math.min(o.dh,Math.floor((o.topT-0.6)/STEP+1e-6)*STEP); nd=Math.round(dh/STEP);
-    if(nd>0){ const clip=off(C,-(cc+0.6)); for(const g of groups){ const d=bool(CL.ClipType.ctIntersection,g.D,clip); if(d.length) gs.push({key:g.key,color:g.color,D:d,byG:new Map(),part:[]}); }
+    if(nd>0){ const clip=off(Ctop,-(cc+0.6)); for(const g of groups){ const d=bool(CL.ClipType.ctIntersection,g.D,clip); if(d.length) gs.push({key:g.key,color:g.color,D:d,byG:new Map(),part:[]}); }
       Dg=gs.length?uni(gs.flatMap(g=>g.D)):[]; }
     if(!emb&&dh<o.dh-1e-6) info.push('Глубина рисунка ограничена '+f1(dh)+' мм: под ним должно остаться 0,6 мм верха. Чтобы вдавить глубже, увеличьте толщину верха колпачка.');
     if(!Dg.length) nd=0; }
   const G=(g,k)=>{ if(!(o.dpuff>0)) return g.D; const u=(k+0.5)/nd; return ins(g.D,g.byG,o.dpuff*(1-Math.sqrt(1-u*u))); };
   const zs=[], regs=[], add=(z0,z1,R)=>{ if(regs.length&&regs[regs.length-1]===R) zs[zs.length-1]=z1; else{ if(!zs.length) zs.push(z0); regs.push(R); zs.push(z1); } };
-  const lv=levels([0,D,D-POST].concat(o.skirt>0?[D-o.skirt]:[])), both=o.skirt>0?uni(skirt,post):post;
-  for(let i=0;i<lv.length-1;i++){ const zm=(lv[i]+lv[i+1])/2, a=zm>D-o.skirt, b=zm>D-POST; add(lv[i],lv[i+1],a&&b?both:a?skirt:post); }
+  const lz=[0,D,D-POST]; if(o.skirt>0) lz.push(D-o.skirt); if(wide&&zw<D) lz.push(zw); if(tx) for(let j=0;j<=tx.N;j++){ const z=tx.z0+j*STEP; if(z<D) lz.push(z); }
+  const lv=levels(lz.filter(z=>z>=0&&z<=D)), rk=new Map(), ids=new Map(); let nid=0; const idOf=r=>{ if(!ids.has(r)) ids.set(r,++nid); return ids.get(r); };
+  for(let i=0;i<lv.length-1;i++){ const zm=(lv[i]+lv[i+1])/2, a=o.skirt>0&&zm>D-o.skirt, b=zm>D-POST, ol=OUT(zm), key=idOf(ol)+'|'+a+'|'+b;
+    if(!rk.has(key)){ const ring=a?dif(ol,hollow):null; rk.set(key,a&&b?uni(ring,post):a?ring:post); } add(lv[i],lv[i+1],rk.get(key)); }
   const jmax=nDome+(emb?nd:0)-1; // each colour group is kept as its own solid: raised decor, or the flush inlay
   for(let j=-np;j<=jmax;j++){ const base=T(j), z0=Hc+j*STEP, z1=z0+STEP; let main=base;
     if(nd&&emb){ if(j>=0){ const all=[];
@@ -451,7 +475,7 @@ function buildCap(o,C,p,groups,info,merge){ // z=0 at its lowest point, the flat
   for(const g of gs){ const pl=g.part; while(pl.length&&!pl[0][2].length) pl.shift(); while(pl.length&&!pl[pl.length-1][2].length) pl.pop(); if(!pl.length) continue;
     const pz=[pl[0][0]], pr=[]; for(const [a,b,R] of pl){ if(pr.length&&pr[pr.length-1]===R) pz[pz.length-1]=b; else{ pr.push(R); pz.push(b); } }
     parts.push({key:g.key,color:g.color,tri:solid(pz,pr)}); top=Math.max(top,pz[pz.length-1]); }
-  return {tri:solid(zs,regs),parts,top,faceUp:nDome>0||(emb&&nd>0),decor:nd>0};
+  return {tri:solid(zs,regs),parts,top,faceUp:nDome>0||(emb&&nd>0),decor:nd>0,Cout:Ctop};
 }
 function mergeParts(caps){ const by=new Map(); for(const k of caps) for(const q of k.parts){ if(!by.has(q.key)) by.set(q.key,{key:q.key,color:q.color,list:[]}); by.get(q.key).list.push(q.tri); }
   return [...by.values()].map(g=>({key:g.key,color:g.color,tri:cat(g.list)})); }
@@ -462,12 +486,33 @@ const TEXW={ ribs:(s,z,P,h)=>Math.pow(0.5+0.5*Math.cos(2*PI*s/P),1.5),
   weave:(s,z,P,h)=>{ const r=Math.floor(z/h), f=z/h-r; return Math.pow(Math.sin(PI*f),0.6)*(0.3+0.7*(0.5+0.5*Math.cos(2*PI*s/P+PI*r))); },
   knurl:(s,z,P,h)=>{ const tri=v=>1-Math.abs(2*(v-Math.floor(v))-1); return Math.min(tri(s/P+z/h),tri(s/P-z/h)); },
   twist:(s,z,P,h)=>Math.pow(0.5+0.5*Math.cos(2*PI*(s/P+z/h)),1.5) };
+TEXW.ruffle=(s,z,P,h)=>ruf(s,z/h,P);
+function ruf(s,u,P){ // irregular bubbly crinkle, like the foot of a macaron shell
+  const a=0.5+0.5*Math.sin(2*PI*s/P+1.8*Math.sin(2*PI*s/(2.37*P))+2.2*Math.sin(2*PI*u+0.9*Math.sin(2*PI*s/(1.61*P)))), b=0.5+0.5*Math.sin(2*PI*s/(1.27*P)+1.6*Math.sin(2*PI*u*1.3+0.7*s/P));
+  return Math.pow(0.6*a+0.4*b,1.3); }
 const tube=f=>Math.sqrt(Math.max(0,1-(2*f-1)**2));
 const TEXR={ smooth:()=>1,
   rope:(s,f,P)=>tube(f)*(0.55+0.45*(0.5+0.5*Math.cos(2*PI*(s/P+f)))),
   braid:(s,f,P)=>tube(f)*(0.5+0.5*(0.5+0.5*Math.cos(2*PI*(s/P+Math.abs(2*f-1)*0.75)))),
   beads:(s,f,P)=>{ const u=s/P-Math.floor(s/P); return Math.sqrt(tube(f)*tube(u)); },
-  ribs:(s,f,P)=>0.55+0.45*Math.pow(0.5+0.5*Math.cos(2*PI*s/P),1.5) };
+  ribs:(s,f,P)=>0.55+0.45*Math.pow(0.5+0.5*Math.cos(2*PI*s/P),1.5),
+  ruffle:(s,f,P)=>Math.pow(tube(f),0.5)*(0.45+0.55*ruf(s,f*1.5,P)) };
+function capTexture(o,Cp,z0,z1,up){ // side pattern on the keycap: outline per 0.2 mm slab between z0 and z1 (keycap coordinates)
+  if(!TEXW[o.capTex]||!Cp.length||z1-z0<STEP*0.5) return null;
+  const q=pts(Cp[0]), m=q.length; let A=0, L=0; const cum=[0];
+  for(let i=0;i<m;i++){ const a=q[i], b=q[(i+1)%m]; A+=a.x*b.y-b.x*a.y; L+=Math.hypot(b.x-a.x,b.y-a.y); cum.push(L); }
+  const sg=A>0?1:-1, n=Math.max(80,Math.min(1400,Math.round(L/Math.min(0.45,o.wPitch/10)))), px=new Float64Array(n), py=new Float64Array(n), nx=new Float64Array(n), ny=new Float64Array(n);
+  for(let k=0,e=0;k<n;k++){ const t=k*L/n; while(cum[e+1]<t) e++; const a=q[e], b=q[(e+1)%m], u=(t-cum[e])/((cum[e+1]-cum[e])||1); px[k]=a.x+(b.x-a.x)*u; py[k]=a.y+(b.y-a.y)*u; }
+  for(let k=0;k<n;k++){ const a=(k+n-2)%n, b=(k+2)%n, tx=px[b]-px[a], ty=py[b]-py[a], l=Math.hypot(tx,ty)||1; nx[k]=sg*ty/l; ny[k]=-sg*tx/l; }
+  const N=Math.max(1,Math.round((z1-z0)/STEP)), Pw=L/Math.max(1,Math.round(L/o.wPitch)), poly=new Array(N); let prev=new Float64Array(n), last=null;
+  const order=[...Array(N).keys()]; if(!up) order.reverse(); // the clamp follows the print direction: face down prints the cap upside down
+  for(const j of order){ const zc=(j+0.5)*STEP, d=new Float64Array(n); let same=!!last;
+    for(let k=0;k<n;k++){ let v=o.capTexD*TEXW[o.capTex](k*L/n,zc,Pw,o.wRow); if(v<0.03) v=0; v=Math.min(v,prev[k]+STEP); d[k]=v; if(same&&Math.abs(v-prev[k])>1e-5) same=false; }
+    prev=d; if(same){ poly[j]=last; continue; }
+    const path=[]; for(let k=0;k<n;k++) path.push(P(px[k]+nx[k]*d[k],py[k]+ny[k]*d[k]));
+    last=uni(uni([path]),Cp); poly[j]=last; }
+  return {z0,N,poly};
+}
 function bodyTexture(o,S,Ht,J,keepFn){
   const wOn=!!TEXW[o.wtex], rOn=!!TEXR[o.rimStyle]; if(!(wOn||rOn)||!S.length) return null;
   const q=pts(S[0]), m=q.length; let A=0, L=0; const cum=[0];
@@ -478,12 +523,13 @@ function bodyTexture(o,S,Ht,J,keepFn){
   for(let k=0;k<n;k++){ const a=(k+n-2)%n, b=(k+2)%n, tx=px[b]-px[a], ty=py[b]-py[a], l=Math.hypot(tx,ty)||1; nx[k]=sg*ty/l; ny[k]=-sg*tx/l;
     if(J) inv[k]=(J.R&&nx[k]>0.5)||(J.L&&nx[k]<-0.5)||(J.T&&ny[k]>0.5)||(J.B&&ny[k]<-0.5)?1:0; }
   const b=bbox(S), Pw=L/Math.max(1,Math.round(L/o.wPitch)), Pr=L/Math.max(1,Math.round(L/o.rimPitch)), amp=o.wDepth, out=o.rimOut;
-  const zr0=rOn?Math.max(0.4,Ht-o.rimH):Ht+1, zw0=Math.max(0.6,o.cham+0.2), zw1=rOn?zr0:Ht-Math.max(0.4,o.cham);
+  const zr0=rOn?Math.max(0.4,Ht-o.rimH):Ht+1, zw0=Math.max(0.6,o.cham+0.2,o.bRound), zw1=rOn?zr0:Ht-Math.max(0.4,o.cham);
   const N=Math.ceil(Ht/STEP-1e-6), id=new Int32Array(N), poly=[null]; let prev=null;
   for(let j=0;j<N;j++){ const zc=(j+0.5)*STEP, d=new Float64Array(n); let any=false, neg=false, same=!!prev;
     for(let k=0;k<n;k++){ const s=k*L/n; let v=0;
       if(rOn&&zc>=zr0){ v=out*TEXR[o.rimStyle](s,(zc-zr0)/o.rimH,Pr); if(inv[k]) v-=out; }
       else if(wOn&&zc>=zw0&&zc<zw1){ v=amp*TEXW[o.wtex](s,zc,Pw,o.wRow); if(inv[k]) v-=amp; }
+      if(Math.abs(v)<0.03) v=0; // sub-print bumps only make slivers
       if(prev) v=Math.min(v,prev[k]+STEP); // never steeper than 45 degrees: prints without supports
       d[k]=v; if(Math.abs(v)>1e-4) any=true; if(v<-1e-4) neg=true; if(same&&Math.abs(v-prev[k])>1e-5) same=false; }
     prev=d;
@@ -494,12 +540,14 @@ function bodyTexture(o,S,Ht,J,keepFn){
     poly.push(R); id[j]=poly.length-1; }
   return {n:N,id,poly};
 }
-function buildModel(o,merge){
+function buildModel(o,merge){ setSw(o);
   const out=buildOutline(o,o.size); if(!out) return null;
   const S=out.S, q=pts(S[0]), warn=[], info=[];
+  if(o.lid) o={...o,skirt:Math.round((STEM_TOP-SW.TRAVEL-0.5)*10)/10,recess:Math.round((STEM_TOP-SW.TRAVEL-0.3)*10)/10,capWide:0}; // foot reaches down to just above the bottom shell; cream stays under the pressed lid
+  { const sk=Math.round((STEM_TOP-SW.TRAVEL-0.3)*10)/10; if(o.skirt>sk){ o={...o,skirt:sk}; info.push('Юбка колпачка укорочена до '+f1(sk)+' мм: у низкого свитча ход меньше, длинная юбка упрётся в корпус.'); } }
   if(out.pieces>1) info.push('В изображении несколько отдельных частей: взята самая крупная. Чтобы объединить их, увеличьте толщину контура.');
   if(out.cutR) info.push('Скругление углов уменьшено, чтобы не отрезать тонкие части фигуры.');
-  const ps=swPos(o,S,q), n=ps.length, H=FLOOR+(o.trim?5.4:8.6)+PLATE;
+  const ps=swPos(o,S,q), n=ps.length, H=FLOOR+(o.trim?SW.BELOW_T:SW.BELOW)+PLATE;
   const pocket=ps.map(p=>rect(p.x,p.y,POCKET,POCKET,p.rot)), plate=ps.map(p=>rect(p.x,p.y,o.sock,o.sock,p.rot));
   if(!ps.every(p=>fits(S,p.x,p.y,p.rot))) warn.push(n>1?'Не все свитчи помещаются в контур: увеличьте размер или сдвиньте их. Вокруг каждого гнезда нужна стенка от 1,2 мм.':'Свитч не помещается в контур: увеличьте размер или сдвиньте свитч. Вокруг гнезда нужна стенка от 1,2 мм.');
   close: for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) if(area(bool(CL.ClipType.ctIntersection,off([pocket[i]],0.6),[pocket[j]]))>0.01){ warn.push('Гнёзда свитчей слишком близко друг к другу: раздвиньте их.'); break close; }
@@ -525,16 +573,20 @@ function buildModel(o,merge){
   const R=o.recess, Ht=H+R, D=Math.max(o.skirt,POST), Hc=D+o.topT;
   const Cs=o.sws.map((w,i)=>{ if(w.cap==='none') return null;
     if(w.cap!=='body') return capOutline(o,w,ps[i]);
-    let ci=R>0?o.rimW+o.gap:o.capIn, C=off(S,-ci);
+    let ci=R>0&&!o.lid?o.rimW+o.gap:o.capIn, C=off(S,-ci);
     if(R<=0&&C.length>1){ while(ci>0.1&&C.length>1){ ci/=2; C=off(S,-ci); } info.push('Отступ колпачка от края уменьшен до '+f1(ci)+' мм, чтобы не отрезать тонкие части фигуры.'); }
     if(o.att==='hole') C=dif(C,[circle(hx,hy,hr+2.5,48)]); return largest(C).S; });
-  let well=null;
-  if(R>0){ const ws=[]; o.sws.forEach((w,i)=>{ if(w.cap==='none') ws.push(...(n===1?off(S,-o.rimW):[rect(ps[i].x,ps[i].y,PITCH,PITCH,ps[i].rot)])); else if(Cs[i].length) ws.push(...off(Cs[i],o.gap)); });
+  let well=null, creamOuter=null;
+  if(o.lid){ creamOuter=largest(off(S,-o.creamIn)).S; well=creamOuter.length?off(creamOuter,-o.rimW):null;
+    if(!well||!well.length||ps.some(p=>area(dif([rect(p.x,p.y,SW.CLEAR,SW.CLEAR,p.rot)],well))>0.01)) warn.push('Крем получается слишком узким, внутри него не помещается свитч: увеличьте размер или уменьшите «Крем уже половинок».');
+    info.push('Крем виден на '+f1(SW.TRAVEL+0.5)+' мм, при нажатии верхняя половинка опускается на '+f1(SW.TRAVEL)+' мм.');
+    if(R<SW.TRAVEL+0.5) info.push('У низкого свитча между кремом и верхней половинкой остаётся щель около '+f1(SW.TRAVEL+0.5-R)+' мм: короткий ход не даёт поднять крем выше.'); }
+  else if(R>0){ const ws=[]; o.sws.forEach((w,i)=>{ if(w.cap==='none') ws.push(...(n===1?off(S,-o.rimW):[rect(ps[i].x,ps[i].y,PITCH,PITCH,ps[i].rot)])); else if(Cs[i].length) ws.push(...off(Cs[i],o.gap)); });
     well=ws.length?uni(ws):null;
     if(!well) warn.push('Бортик не построен: колпачок не помещается внутрь контура.');
-    else if(Cs.some(Boolean)){ const out_=10.6+o.topT-R;
-      info.push(out_>=4?'Колпачок выступает над бортиком на '+f1(out_)+' мм, при нажатии опускается на 4 мм.'
-        :out_>=0?'Колпачок выступает над бортиком на '+f1(out_)+' мм: при полном нажатии он уйдёт ниже бортика на '+f1(4-out_)+' мм.'
+    else if(Cs.some(Boolean)){ const out_=STEM_TOP+o.topT-R, TR=SW.TRAVEL;
+      info.push(out_>=TR?'Колпачок выступает над бортиком на '+f1(out_)+' мм, при нажатии опускается на '+f1(TR)+' мм.'
+        :out_>=0?'Колпачок выступает над бортиком на '+f1(out_)+' мм: при полном нажатии он уйдёт ниже бортика на '+f1(TR-out_)+' мм.'
         :'Колпачок ниже края бортика на '+f1(-out_)+' мм: нажимать придётся внутрь колодца.'); } }
 
   // dovetail joints on the walls of a rectangle: tabs rise from the bed, slots are closed on top by the switch plate
@@ -549,21 +601,24 @@ function buildModel(o,merge){
   const lugT=Math.min(o.lugT,Ht), lugFull=lug&&lugT>=Ht-1e-6;
   const jSides=o.shape==='rect'?{R:o.jR!=='none',L:o.jL!=='none',T:o.jT!=='none',B:o.jB!=='none'}:null;
   let keep=null; const needKeep=()=>keep||(keep=bool(CL.ClipType.ctIntersection,S,uni([...off(pocket,WALL),...(slots.length?off(uni(slots),1):[]),...(tabs.length?off(uni(tabs),1):[]),...(hole?off(hole,1.2):[]),...(well?off(well,1):[])])));
-  const tex=bodyTexture(o,S,Ht,jSides,needKeep);
+  const tex=bodyTexture(o,S,o.lid?H:Ht,jSides,needKeep);
   if(tex&&jSides&&(jSides.R||jSides.L||jSides.T||jSides.B)) info.push('На стенках с шипом или пазом узор вдавлен внутрь, ободок там не выступает: кликеры стыкуются вплотную.');
 
   // body
-  const c=o.cham, nc=Math.round(c/STEP), cache=new Map();
-  const outer=(withLug,wt,d,tid)=>{ const k=(withLug?'L':'S')+(wt?'T':'')+d+'t'+tid; if(!cache.has(k)){ let b=tid?tex.poly[tid]:S; if(withLug) b=uni(b,lug); if(wt) b=uni(b,tabs); cache.set(k,d>0?off(b,-d):b); } return cache.get(k); };
+  const c=o.cham, nc=Math.round(c/STEP), cache=new Map(), rb=o.bRound, bq=[];
+  if(rb>0){ let qv=0; for(let k=Math.ceil(rb/STEP)-1;k>=0;k--){ const z=(k+0.5)*STEP, pr=rb-Math.sqrt(Math.max(0,rb*rb-(rb-z)**2)); qv=Math.min(pr,qv+STEP); bq[k]=qv; } } // round edge, steepest part held at 45 degrees
+  const bR=zm=>{ const k=Math.floor(zm/STEP); return k<bq.length?bq[k]:0; };
+  const outer=(withLug,wt,d,tid)=>{ const k=(withLug?'L':'S')+(wt?'T':'')+d+'t'+tid; if(!cache.has(k)){ let b=tid?tex.poly[tid]:S; if(withLug) b=uni(b,lug); if(wt) b=uni(b,tabs); let r=d>0?off(b,-d):b; if(d>0&&rb>0) r=uni(r,needKeep()); cache.set(k,r); } return cache.get(k); };
   const zl=[0,FLOOR,H-PLATE,H,Ht]; for(let k=1;k<=nc;k++){ zl.push(k*STEP); zl.push(Ht-c+(k-1)*STEP); }
   if(lug&&!lugFull) zl.push(lugT);
   if(tabs.length) zl.push(zj-0.3);
   if(tex) for(let k=1;k<tex.n;k++) zl.push(k*STEP);
+  for(let k=1;k<=bq.length;k++) zl.push(k*STEP);
   const bz=levels(zl), rc=new Map(), br=[];
-  for(let i=0;i<bz.length-1;i++){ const zm=(bz[i]+bz[i+1])/2, d=Math.round(Math.max(0,c-zm,zm-(Ht-c))*100)/100, wl=!!lug&&(lugFull||zm<lugT);
-    const zone=zm<FLOOR?0:zm<H-PLATE?1:zm<H?2:3, wt=tabs.length>0&&zm<zj-0.3, tid=tex?tex.id[Math.min(tex.n-1,Math.floor(zm/STEP))]:0, key=d+'|'+wl+'|'+zone+'|'+wt+'|'+tid;
+  for(let i=0;i<bz.length-1;i++){ const zm=(bz[i]+bz[i+1])/2, d=Math.round(Math.max(0,c-zm,zm-(Ht-c),bR(zm))*100)/100, wl=!!lug&&(lugFull||zm<lugT);
+    const zone=zm<FLOOR?0:zm<H-PLATE?1:zm<H?2:3, wt=tabs.length>0&&zm<zj-0.3, tid=tex&&Math.floor(zm/STEP)<tex.n?tex.id[Math.floor(zm/STEP)]:0, key=d+'|'+wl+'|'+zone+'|'+wt+'|'+tid;
     if(!rc.has(key)){ const cuts=[]; if(hole) cuts.push(hole[0]); if(zone===1) cuts.push(...pocket); if(zone===2) cuts.push(...plate); if(zone===3&&well) cuts.push(...well); if(zone<2) cuts.push(...slots);
-      const Rg=outer(wl,wt,d,tid); rc.set(key,cuts.length?dif(Rg,cuts):Rg); }
+      const Rg=o.lid&&zone===3?(d>0?off(creamOuter,-d):creamOuter):outer(wl,wt,d,tid); rc.set(key,cuts.length?dif(Rg,cuts):Rg); }
     br.push(rc.get(key)); }
   const cz=[bz[0]], cr=[]; br.forEach((R,i)=>{ if(cr.length&&cr[cr.length-1]===R) cz[cz.length-1]=bz[i+1]; else{ cr.push(R); cz.push(bz[i+1]); } }); // merge equal slabs
   const body=solid(cz,cr);
@@ -571,12 +626,17 @@ function buildModel(o,merge){
   // keycaps
   const groups=decorGroups(o).map(g=>({...g,D:off(off(uni(g.paths),-0.1),0.1)})).filter(g=>g.D.length), caps=[];
   for(let i=groups.length-2;i>=0;i--){ const later=uni(groups.slice(i+1).flatMap(g=>g.D)); if(later.length) groups[i].D=dif(groups[i].D,later); } // later groups (lettering) lie on top
-  o.sws.forEach((w,i)=>{ if(!Cs[i]) return; const r=buildCap(o,Cs[i],ps[i],groups,info,merge);
+  o.sws.forEach((w,i)=>{ if(!Cs[i]) return; let ext=null;
+    if(o.capWide>0){ const D=Math.max(o.skirt,POST), Hc=D+o.topT, zmin=R>0?R+SW.TRAVEL+0.5-STEM_TOP+D:D-(STEM_TOP-SW.TRAVEL-0.5), zw=Math.max(o.capShellZ,zmin,0);
+      if(zw>Hc-0.4) info.push('Широкий верх колпачка не помещается: при такой глубине утопления ему нужно начинаться выше самого колпачка. Уменьшите утопление или увеличьте юбку.');
+      else{ if(zw>o.capShellZ+0.05) info.push('Широкий верх колпачка начинается с '+f1(zw)+' мм, чтобы при нажатии не задевать бортик.'); ext={Sh:largest(bool(CL.ClipType.ctIntersection,off(Cs[i],o.capWide),off(S,0))).S,zw}; } }
+    if(o.lid&&creamOuter){ ext={lidHollow:off(creamOuter,o.gap)}; const ringW=o.creamIn-o.gap-o.capIn; if(ringW<0.8) warn.push('Край верхней половинки вокруг крема тоньше 0,8 мм: увеличьте «Крем уже половинок» или уменьшите отступ колпачка.'); }
+    const r=buildCap(o,Cs[i],ps[i],groups,info,merge,ext);
     if(!r) warn.push((n>1?'Колпачок свитча '+(i+1):'Колпачок')+' не получается: над штоком свитча должна быть сплошная часть фигуры. Увеличьте колпачок или сдвиньте свитч.');
     else caps.push({i,C:Cs[i],...r}); });
   if(groups.length&&caps.length&&!caps.some(k=>k.decor)) info.push('Рисунок и надписи не попадают на колпачок: уменьшите их или сдвиньте к центру колпачка.');
-  const bb=bbox([...uni(lug?uni(S,lug):S,tabs),...(tex?tex.poly.filter(Boolean).flat():[])]), cb=caps.length?bbox(caps.flatMap(k=>k.C)):null;
-  return {body,caps,capAll:cat(caps.map(k=>k.tri)),parts:mergeParts(caps),H,Ht,Hc,top:caps.length?Math.max(...caps.map(k=>k.top)):Hc,faceUp:caps.some(k=>k.faceUp),D,sws:ps,warn,info:[...new Set(info)],bb,cb,capZ:H+STEM_TOP-D};
+  const bb=bbox([...uni(lug?uni(S,lug):S,tabs),...(tex?tex.poly.filter(Boolean).flat():[])]), cb=caps.length?bbox(caps.flatMap(k=>k.Cout||k.C)):null;
+  return {body,caps,capAll:cat(caps.map(k=>k.tri)),parts:mergeParts(caps),H,Ht,Hc,top:caps.length?Math.max(...caps.map(k=>k.top)):Hc,faceUp:caps.some(k=>k.faceUp),travel:SW.TRAVEL,swType:o.sw==='choc'?'choc':'mx',D,sws:ps,warn,info:[...new Set(info)],bb,cb,capZ:H+STEM_TOP-D};
 }
 
 /* ---------- image -> outline ---------- */
@@ -690,13 +750,17 @@ const grid=new THREE.GridHelper(200,20,0x8791a6,0x8791a6); grid.material.transpa
 const root=new THREE.Group(); root.rotation.x=-PI/2; scene.add(root);
 const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:0.62,metalness:0.02,flatShading:true});
 const bodyM=new THREE.Mesh(new THREE.BufferGeometry(),mat($('col-body').value)), capM=new THREE.Mesh(new THREE.BufferGeometry(),mat($('col-cap').value));
-const swAll=new THREE.Group(), swPool=[], swDark=mat('#2c313c'), swRed=mat('#c8392f');
-function mkSw(){ const g=new THREE.Group(), mv=new THREE.Group(), hs=new THREE.Mesh(new THREE.BoxGeometry(13.9,13.9,6.6),swDark); hs.position.z=3.3;
-  const s1=new THREE.Mesh(new THREE.BoxGeometry(4,1.2,7),swRed), s2=new THREE.Mesh(new THREE.BoxGeometry(1.2,4,7),swRed); s1.position.z=s2.position.z=6.7; mv.add(s1,s2); g.add(hs,mv); swAll.add(g); return {g,mv}; }
+const swAll=new THREE.Group(), swPools={mx:[],choc:[]}, swDark=mat('#2c313c'), swRed=mat('#c8392f');
+function mkSw(t){ const g=new THREE.Group(), mv=new THREE.Group();
+  if(t==='choc'){ const hs=new THREE.Mesh(new THREE.BoxGeometry(15,15,3),swDark); hs.position.z=1.5; const st_=new THREE.Mesh(new THREE.BoxGeometry(9.6,4.2,4.4),swRed); st_.position.z=3.6; mv.add(st_); g.add(hs,mv); }
+  else{ const hs=new THREE.Mesh(new THREE.BoxGeometry(13.9,13.9,6.6),swDark); hs.position.z=3.3;
+    const s1=new THREE.Mesh(new THREE.BoxGeometry(4,1.2,7),swRed), s2=new THREE.Mesh(new THREE.BoxGeometry(1.2,4,7),swRed); s1.position.z=s2.position.z=6.7; mv.add(s1,s2); g.add(hs,mv); }
+  swAll.add(g); return {g,mv}; }
 const capG=new THREE.Group(), partMs=new Map(); capG.add(capM); root.add(bodyM,capG,swAll);
 let model=null, orbit={th:-0.7,ph:1.0,r:150,ty:8}, pressT=-1;
-function place(){ if(!model) return; const dz=(pressT>=0?-4*Math.sin(PI*Math.min(1,pressT)):0), expl=$('c-exp').checked?14:0, L=model.sws;
-  capG.position.z=model.capZ+dz+expl; swAll.visible=$('c-sw').checked; while(swPool.length<L.length) swPool.push(mkSw());
+function place(){ if(!model) return; const dz=(pressT>=0?-model.travel*Math.sin(PI*Math.min(1,pressT)):0), expl=$('c-exp').checked?14:0, L=model.sws;
+  capG.position.z=model.capZ+dz+expl; swAll.visible=$('c-sw').checked; const swPool=swPools[model.swType]; while(swPool.length<L.length) swPool.push(mkSw(model.swType));
+  swPools[model.swType==='mx'?'choc':'mx'].forEach(w=>{ w.g.visible=false; });
   swPool.forEach((w,i)=>{ w.g.visible=i<L.length; if(i<L.length){ w.g.position.set(L[i].x,L[i].y,model.H); w.g.rotation.z=L[i].rot; w.mv.position.z=dz; } }); }
 function render(){ const w=canvas.clientWidth,h=canvas.clientHeight; if(!w||!h) return;
   if(canvas.width!==Math.round(w*renderer.getPixelRatio())||canvas.height!==Math.round(h*renderer.getPixelRatio())){ renderer.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
@@ -733,8 +797,8 @@ function rebuild(){
   if(!m){ setGeo(bodyM,null); setGeo(capM,null); setParts(null); $('dims').textContent=''; $('tri').textContent='';
     say(st.shape==='image'?'Контур не найден. Подвигайте порог или включите инверсию.':'Не удалось построить фигуру с такими параметрами.'); $('dl').disabled=true; draw(); return; }
   setGeo(bodyM,m.body); setGeo(capM,m.capAll); setParts(m.parts); recolor();
-  const nk=m.caps.length, kit=st.stemKit?' Добавлены stem-cutter.stl (резак под шток свитча) и stem-post.stl (готовая ножка).':'';
-  const emb=st.dmode==='emboss', sep=m.parts.length>0&&(st.dmode==='inlay'||st.dsep), multi=m.parts.length>1;
+  const nk=m.caps.length, kit=st.stemKit?(st.sw==='choc'?' Добавлен choc-legs.stl: ножки под Choc для своих колпачков.':' Добавлены stem-cutter.stl (резак под шток свитча) и stem-post.stl (готовая ножка).'):'';
+  const emb=st.dmode==='emboss', sep=m.parts.length>0&&(st.dmode==='inlay'||st.dsep)&&!st.capOne, multi=m.parts.length>1;
   $('printnote').textContent=(nk===0?'В архиве только корпус body.stl, колпачков нет.'
     :'В архиве body.stl и '+(nk>1?nk+' колпачков (keycap-1.stl и далее)':'keycap.stl')+'. '+(m.faceUp?'Надутые колпачки и колпачки с выпуклым рисунком лежат лицом вверх, под ними нужны поддержки.':'Колпачки уже перевёрнуты лицом на стол, всё печатается без поддержек.')
       +(sep?(multi?' Каждый цвет рисунка лежит своим файлом (c2, c3… и text в имени), список цветов в readme.txt. Откройте колпачок и все его цвета в слайсере как части одной детали и назначьте каждой части свою катушку.':' Рисунок лежит отдельными файлами ('+(emb?'decor':'inlay')+' в имени): откройте колпачок и его рисунок в слайсере как части одной детали и назначьте рисунку свой цвет.'):''))+kit;
@@ -742,7 +806,7 @@ function rebuild(){
   $('dims').innerHTML='корпус <b>'+f1(m.bb.w)+' × '+f1(m.bb.h)+' × '+f1(m.Ht)+'</b> мм'+(nk===1?'<br>колпачок <b>'+f1(m.cb.w)+' × '+f1(m.cb.h)+' × '+f1(m.top)+'</b> мм':nk>1?'<br>колпачков <b>'+nk+'</b>, высота <b>'+f1(m.top)+'</b> мм':'');
   $('tri').textContent=Math.round((m.body.length+(m.capAll?m.capAll.length:0)+m.parts.reduce((s,q)=>s+q.tri.length,0))/9).toLocaleString('ru-RU')+' треуг.';
   const key=st.shape+'|'+Math.round(Math.max(m.bb.w,m.bb.h)/8); if(key!==lastFit){ lastFit=key; orbit.r=Math.max(110,Math.max(m.bb.w,m.bb.h)*3.1); orbit.ty=(m.H+10)/2; }
-  draw(); if(booted) autosave();
+  draw(); if(booted){ autosave(); histPush(); }
 }
 let booted=false, pend=0; const schedule=()=>{ if(!pend) pend=requestAnimationFrame(()=>{pend=0;rebuild();}); };
 
@@ -752,16 +816,19 @@ const SL={ // key:[group,label,min,max,step,unit,digits]
   size:['size','Размер по длинной стороне',20,200,1,'мм',0], round:['size','Скругление углов',0,8,0.5,'мм',1], cham:['size','Фаска на рёбрах',0,0.8,0.2,'мм',1],
   ang:['att','Положение по кругу',0,355,5,'°',0], holeD:['att','Диаметр отверстия',2,8,0.5,'мм',1], shift:['att','Сдвиг наружу / внутрь',-4,4,0.25,'мм',2], ringW:['att','Ширина кольца проушины',1.5,4,0.5,'мм',1], lugT:['att','Толщина проушины',2,12,0.5,'мм',1],
   csize:['adv','Размер колпачка',8,60,0.5,'мм',1], sdx:['adv','Сдвиг свитча по X',-40,40,0.5,'мм',1], sdy:['adv','Сдвиг свитча по Y',-40,40,0.5,'мм',1], srot:['adv','Поворот свитча',0,90,5,'°',0],
-  sock:['sw','Гнездо под свитч',14,14.4,0.05,'мм',2],
+  sock:['sw','Гнездо под свитч',13.6,14.4,0.05,'мм',2],
   dh:['dec','Глубина или высота рисунка',0.2,4,0.2,'мм',1], dpuff:['dec','Надуть рисунок',0,3,0.1,'мм',1],
   smooth:['shape','Сглаживание трассировки',0,6,1,'',0], speck:['shape','Убрать мелкие детали',0,3,0.05,'%',2],
   rthr:['rel','Порог рисунка',5,95,1,'%',0], ncol:['rel','Количество цветов вместе с колпачком',2,4,1,'',0], rScale:['rel','Размер рисунка',20,150,5,'%',0], rx:['rel','Сдвиг рисунка по X',-30,30,0.5,'мм',1], ry:['rel','Сдвиг рисунка по Y',-30,30,0.5,'мм',1],
   tsize:['txt','Размер шрифта',3,30,0.5,'мм',1], tx:['txt','Сдвиг надписи по X',-40,40,0.5,'мм',1], ty:['txt','Сдвиг надписи по Y',-40,40,0.5,'мм',1], trot:['txt','Поворот надписи',-180,180,5,'°',0],
+  creamIn:['cap','Крем уже половинок на',1.2,5,0.2,'мм',1],
   recess:['cap','Утопить колпачок в корпус',0,12,0.5,'мм',1], rimW:['cap','Стенка бортика',1.2,3,0.2,'мм',1], gap:['cap','Зазор вокруг колпачка',0.2,0.8,0.1,'мм',1],
   jgap:['join','Зазор в пазах',0.1,0.4,0.05,'мм',2],
   wDepth:['tex','Глубина узора',0.2,2,0.1,'мм',1], wPitch:['tex','Шаг по кругу',2,12,0.5,'мм',1], wRow:['tex','Высота ряда',1.5,8,0.5,'мм',1],
+  bRound:['tex','Скругление низа',0,6,0.5,'мм',1],
   rimH:['rim','Высота ободка',1,6,0.5,'мм',1], rimOut:['rim','Выступ ободка',0.4,3,0.1,'мм',1], rimPitch:['rim','Шаг узора ободка',2,10,0.5,'мм',1],
-  capIn:['cap','Отступ от края корпуса',0,4,0.25,'мм',2], topT:['cap','Толщина верха',1.2,3,0.2,'мм',1], skirt:['cap','Высота юбки',0,6,0.5,'мм',1], crossT:['cap','Зазор крестовины',0,0.2,0.01,'мм',2], puff:['cap','Надуть колпачок',0,8,0.2,'мм',1]
+  capIn:['cap','Отступ от края корпуса',0,4,0.25,'мм',2], capWide:['cap','Верх колпачка шире низа',0,4,0.2,'мм',1], capShellZ:['cap','Широкий верх начинается с высоты',0,8,0.2,'мм',1],
+  capTexH:['captex','Высота узора на колпачке',0.6,5,0.2,'мм',1], capTexD:['captex','Глубина узора на колпачке',0.2,1.5,0.1,'мм',1], topT:['cap','Толщина верха',1.2,3,0.2,'мм',1], skirt:['cap','Высота юбки',0,6,0.5,'мм',1], crossT:['cap','Зазор посадки на шток',0,0.2,0.01,'мм',2], puff:['cap','Надуть колпачок',0,8,0.2,'мм',1]
 };
 const rows={}, TK={tsize:'size',tx:'x',ty:'y',trot:'rot'};
 const curT=()=>st.texts[st.cur]||null, SK={csize:'csize',sdx:'dx',sdy:'dy',srot:'rot'}, curS=()=>st.sws[st.scur]||st.sws[0];
@@ -775,7 +842,7 @@ for(const k in SL){ const [g,label,min,max,step,unit,dg]=SL[k], row=document.cre
   inp.addEventListener('input',()=>{ setV(k,parseFloat(inp.value)); show(); if(k==='ncol'){ st.cbase=0; traceImage(); syncUI(); } if(k==='thr'||k==='rthr'||k==='smooth'||k==='speck') traceImage(); if(k==='recess'){ const v=rows.capIn.hidden; if(v!==(st.recess>0)){ rows.capIn.hidden=!v; rows.rimW.hidden=rows.gap.hidden=v; } } schedule(); }); }
 function syncUI(){
   const s=st.shape, vis={n:['star','poly','flower'].includes(s),depth:['star','flower'].includes(s),aspect:['circle','rect'].includes(s),thr:s==='image'&&!!st.img,
-    ang:st.att!=='none',holeD:st.att!=='none',shift:st.att!=='none',ringW:st.att==='lug',lugT:st.att==='lug',rthr:!['sil','color'].includes(st.rsrc)&&!!st.img,ncol:st.rsrc==='color'&&!!st.img,smooth:!!st.img,speck:!!st.img,dpuff:st.dmode==='emboss',capIn:!(st.recess>0),wDepth:st.wtex!=='none',wPitch:!['none','rings'].includes(st.wtex),wRow:!['none','ribs'].includes(st.wtex),rimH:st.rimStyle!=='none',rimOut:st.rimStyle!=='none',rimPitch:!['none','smooth'].includes(st.rimStyle),rimW:st.recess>0,gap:st.recess>0,csize:!['body','none'].includes(curS().cap)};
+    ang:st.att!=='none',holeD:st.att!=='none',shift:st.att!=='none',ringW:st.att==='lug',lugT:st.att==='lug',rthr:!['sil','color'].includes(st.rsrc)&&!!st.img,ncol:st.rsrc==='color'&&!!st.img,smooth:!!st.img,speck:!!st.img,dpuff:st.dmode==='emboss',capIn:!(st.recess>0),capShellZ:st.capWide>0&&!st.lid,creamIn:st.lid,recess:!st.lid,skirt:!st.lid,capWide:!st.lid,capTexH:st.capTex!=='none',capTexD:st.capTex!=='none',wDepth:st.wtex!=='none',wPitch:!['none','rings'].includes(st.wtex),wRow:!['none','ribs'].includes(st.wtex),rimH:st.rimStyle!=='none',rimOut:st.rimStyle!=='none',rimPitch:!['none','smooth'].includes(st.rimStyle),rimW:st.recess>0,gap:st.recess>0,csize:!['body','none'].includes(curS().cap)};
   for(const k in vis) rows[k].hidden=!vis[k];
   $('invWrap').hidden=s!=='image'||!st.img;
   document.querySelectorAll('#tiles .tile').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===s));
@@ -794,6 +861,8 @@ function syncUI(){
       if((v==='body'&&!one)||(v==='image'&&!st.imgPaths)) continue; const o=document.createElement('option'); o.value=v; o.textContent=t; sel.append(o); }
     sel.value=curS().cap; $('c-stem').checked=st.stemKit; }
   $('dsepWrap').hidden=st.dmode!=='emboss'; $('c-dsep').checked=st.dsep;
+  document.querySelectorAll('#swType button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.sw)); $('chocHint').hidden=st.sw!=='choc';
+  document.querySelectorAll('#capTexSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.capTex)); $('c-capone').checked=st.capOne; $('c-lid').checked=st.lid;
   document.querySelectorAll('#wtexSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.wtex));
   document.querySelectorAll('#rimSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.rimStyle));
   $('texJoinHint').hidden=!(s==='rect'&&(st.wtex!=='none'||st.rimStyle!=='none')&&[st.jL,st.jR,st.jT,st.jB].some(v=>v!=='none'));
@@ -823,6 +892,16 @@ for(const [k,name] of [['jL','Слева'],['jR','Справа'],['jT','Свер
   const l=document.createElement('span'); l.textContent=name; const g=document.createElement('div'); g.className='seg'; g.setAttribute('role','group'); g.setAttribute('aria-label',name);
   for(const [v,t] of [['none','Нет'],['tab','Шип'],['slot','Паз']]){ const b=document.createElement('button'); b.type='button'; b.textContent=t; b.dataset.k=k; b.dataset.v=v; b.onclick=()=>{ st[k]=v; syncUI(); schedule(); }; g.append(b); }
   r.append(l,g); $('joinRows').append(r); }
+document.querySelectorAll('#capTexSeg button').forEach(b=>b.onclick=()=>{ st.capTex=b.dataset.v; syncUI(); schedule(); });
+$('c-capone').onchange=e=>{ st.capOne=e.target.checked; schedule(); };
+const STYLE_KEYS=['lid','creamIn','wtex','wDepth','wPitch','wRow','rimStyle','rimH','rimOut','rimPitch','bRound','recess','rimW','gap','skirt','topT','puff','cham','capWide','capShellZ','capTex','capTexH','capTexD','capIn','round','dpuff'];
+$('plainBtn').onclick=()=>{ for(const k of STYLE_KEYS) st[k]=DEF[k]; syncUI(); schedule(); };
+document.querySelectorAll('#swType button').forEach(b=>b.onclick=()=>{ st.sw=b.dataset.v; st.sock=st.sw==='choc'?13.85:14.1; st.skirt=st.sw==='choc'?Math.min(st.skirt,2.5):(st.skirt<=2.5?DEF.skirt:st.skirt); st.size=Math.max(st.size,autoSize(st)); syncUI(); schedule(); });
+$('c-lid').onchange=e=>{ st.lid=e.target.checked; syncUI(); schedule(); };
+$('macaron').onclick=()=>{ setSw(st); const H=FLOOR+(st.trim?SW.BELOW_T:SW.BELOW)+PLATE, foot=STEM_TOP-SW.TRAVEL-0.5; // top half as tall as the bottom half
+  Object.assign(st,{lid:true,creamIn:2,capIn:0,wtex:'none',rimStyle:'ruffle',rimH:2.5,rimOut:0.8,rimPitch:3,wPitch:3,wRow:2,bRound:3,rimW:1.6,gap:0.4,topT:1.6,cham:0.4,capWide:0,capTex:'ruffle',capTexH:2,capTexD:0.7,
+    puff:Math.max(1.5,Math.min(8,Math.round((H-(foot+1.6))*5)/5))});
+  st.sws.forEach(w=>{ if(w.cap==='none') w.cap=st.sws.length===1?'body':'rect'; }); syncUI(); schedule(); };
 document.querySelectorAll('#wtexSeg button').forEach(b=>b.onclick=()=>{ st.wtex=b.dataset.v; syncUI(); schedule(); });
 document.querySelectorAll('#rimSeg button').forEach(b=>b.onclick=()=>{ st.rimStyle=b.dataset.v; syncUI(); schedule(); });
 $('joinGrid').onclick=()=>{ st.jR=st.jT='tab'; st.jL=st.jB='slot'; syncUI(); schedule(); };
@@ -909,11 +988,14 @@ function exportZip(){ const emb=st.dmode==='emboss'; let m; FIXT=true; try{ m=bu
   const files=[{name:'body.stl',data:stl(m.body,'clicker body',id)}];
   let note='Clicker for Cherry MX style switches\r\n\r\nbody.stl  '+m.bb.w.toFixed(1)+' x '+m.bb.h.toFixed(1)+' x '+m.Ht.toFixed(1)+' mm, print as is (sockets up)\r\n';
   m.caps.forEach((k,j)=>{ const nm=nk>1?'keycap-'+(k.i+1):'keycap'; files.push({name:nm+'.stl',data:stl(k.tri,'clicker keycap',cm)});
+    if(st.capOne&&k.parts.length){ files[files.length-1]={name:nm+'.stl',data:stl(cat([k.tri,...k.parts.map(q=>q.tri)]),'clicker keycap',cm)}; return; }
     const one=k.parts.length===1&&k.parts[0].key==='art'; k.parts.forEach(q=>files.push({name:nm+(emb?'-decor':'-inlay')+(one?'':'-'+q.key)+'.stl',data:stl(q.tri,'clicker keycap artwork',cm)})); });
   if(nk) note+='keycap*.stl  '+nk+' pcs, '+m.top.toFixed(1)+' mm tall, '+(m.faceUp?'domed or raised artwork: face up, needs supports under the cap':'already flipped: face on the bed')+'\r\n';
   if(m.parts.length){ note+=(emb?'*-decor*.stl  raised artwork':'*-inlay*.stl  artwork flush with the face')+': load together with its keycap as parts of one object and give each part its own filament\r\n';
     if(st.rel&&st.rsrc==='color'&&st.colBase) note+='  keycap body colour: '+st.colBase+'\r\n'; m.parts.forEach(q=>{ note+='  '+q.key+': '+(q.key==='text'||q.key==='art'?$('col-dec').value:partColor(q.key))+'\r\n'; }); }
-  if(st.stemKit){ const t=st.crossT; files.push({name:'stem-cutter.stl',data:stl(solid([-0.2,POST],[crossOf(0,0,0,t)]),'mx stem cutter',id)},{name:'stem-post.stl',data:stl(solid([0,POST],[postOf(0,0,0,t)]),'mx stem post',id)});
+  if(st.stemKit&&SW===SWT.choc){ const t=st.crossT; files.push({name:'choc-legs.stl',data:stl(solid([0,POST],[chocPegs(0,0,0,t)]),'choc keycap legs',id)});
+    note+='choc-legs.stl  two Kailh Choc v1 keycap legs, 3 mm long, 5.7 mm apart. Join them to the underside of your own keycap; the underside rests about '+(STEM_TOP-POST).toFixed(1)+' mm above the switch plate and travels 3 mm.\r\n'; }
+  else if(st.stemKit){ const t=st.crossT; files.push({name:'stem-cutter.stl',data:stl(solid([-0.2,POST],[crossOf(0,0,0,t)]),'mx stem cutter',id)},{name:'stem-post.stl',data:stl(solid([0,POST],[postOf(0,0,0,t)]),'mx stem post',id)});
     note+='stem-cutter.stl  MX cross, 4 mm deep (z 0..4, plus 0.2 mm below). Subtract it from the underside of your own keycap, or load it as a negative volume in the slicer. Needs at least 5.6 mm of solid material around it.\r\nstem-post.stl  ready post with the cross already cut (5.6 mm wide, 4 mm tall). Join it to the underside of your own keycap instead of cutting.\r\nThe lower end of the post (the open end of the cross) faces the switch and rests about 6.6 mm above the switch plate; the keycap travels 4 mm down.\r\n'; }
   note+='\r\nLayer 0.2 mm. Switch socket '+st.sock.toFixed(2)+' mm, stem clearance '+st.crossT.toFixed(2)+' mm.\r\nIf the switch is loose or the keycap is too tight, change those two values and export again.\r\n';
   files.push({name:'readme.txt',data:new TextEncoder().encode(note)}); return zip(files); }
@@ -929,26 +1011,35 @@ $('dl').onclick=()=>{ if(model) saveFile('clicker-stl.zip',exportZip(),$('dlmsg'
 const DEF=JSON.parse(JSON.stringify(st,(k,v)=>k==='img'||k[0]==='_'?undefined:v));
 const PKEYS=Object.keys(DEF).filter(k=>!['texts','sws','imgPaths','relRings','imgStat','cur','scur','colGroups','colPalette','colBase'].includes(k));
 const LS={get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }};
-function snapshot(withImg){ const o={v:1,s:{}}; for(const k of PKEYS) o.s[k]=st[k];
-  o.texts=st.texts.map(t=>({text:t.text,font:t.font<DEFFONTS?t.font:0,size:t.size,x:t.x,y:t.y,rot:t.rot,sample:!!t.sample}));
+function snapshot(withImg,raw){ const o={v:1,s:{}}; for(const k of PKEYS) o.s[k]=st[k];
+  o.texts=st.texts.map(t=>({text:t.text,font:raw||t.font<DEFFONTS?t.font:0,size:t.size,x:t.x,y:t.y,rot:t.rot,sample:!!t.sample}));
   o.sws=st.sws.map(w=>({dx:w.dx,dy:w.dy,rot:w.rot,cap:w.cap,csize:w.csize}));
   const q=r=>r?r.map(p=>p.flatMap(([x,y])=>[Math.round(x*10000),Math.round(y*10000)])):null; o.ip=q(st.imgPaths); o.rr=q(st.relRings);
   if(st.colGroups) o.cg=st.colGroups.map(g=>({pi:g.pi,c:g.rgb,r:q(g.rings)})); if(st.colPalette) o.cp=st.colPalette; o.cb=st.colBase;
   if(withImg&&st.img&&st.img.small) o.img=st.img.small; return o; }
 const DEFFONTS=FONTS.length, BLANK=snapshot(false);
-async function applyProject(o){ if(!o||typeof o!=='object'||!o.s) return false;
+async function applyProject(o,keepImg){ if(!o||typeof o!=='object'||!o.s) return false;
   for(const k of PKEYS) if(k in o.s&&typeof o.s[k]===typeof DEF[k]) st[k]=o.s[k];
   st.texts=(Array.isArray(o.texts)?o.texts:[]).slice(0,20).map(t=>({text:String(t.text||'').slice(0,40),font:(t.font|0)>=0&&(t.font|0)<FONTS.length?(t.font|0):0,size:+t.size||8,x:+t.x||0,y:+t.y||0,rot:+t.rot||0,sample:!!t.sample}));
   st.sws=(Array.isArray(o.sws)?o.sws:[]).slice(0,9).map(w=>({dx:+w.dx||0,dy:+w.dy||0,rot:+w.rot||0,cap:String(w.cap||'body'),csize:+w.csize||17})); if(!st.sws.length) st.sws=[{dx:0,dy:0,rot:0,cap:'body',csize:17}];
   const uq=r=>Array.isArray(r)&&r.length?r.map(f=>{ const p=[]; for(let i=0;i+1<f.length;i+=2) p.push([f[i]/10000,f[i+1]/10000]); return p; }).filter(p=>p.length>=3):null;
   st.imgPaths=uq(o.ip); st.relRings=uq(o.rr);
-  st.colGroups=Array.isArray(o.cg)?o.cg.map(g=>({pi:g.pi|0,rgb:/^#[0-9a-f]{6}$/i.test(g.c)?g.c:'#888888',rings:uq(g.r)||[]})):null; st.colPalette=Array.isArray(o.cp)?o.cp.filter(c=>c&&/^#[0-9a-f]{6}$/i.test(c.rgb)).map(c=>({rgb:c.rgb,share:+c.share||0})):null; st.colBase=typeof o.cb==='string'&&/^#[0-9a-f]{6}$/i.test(o.cb)?o.cb:''; st.img=null; st.imgStat=null; st.cur=st.texts.length?0:-1; st.scur=0;
+  st.colGroups=Array.isArray(o.cg)?o.cg.map(g=>({pi:g.pi|0,rgb:/^#[0-9a-f]{6}$/i.test(g.c)?g.c:'#888888',rings:uq(g.r)||[]})):null; st.colPalette=Array.isArray(o.cp)?o.cp.filter(c=>c&&/^#[0-9a-f]{6}$/i.test(c.rgb)).map(c=>({rgb:c.rgb,share:+c.share||0})):null; st.colBase=typeof o.cb==='string'&&/^#[0-9a-f]{6}$/i.test(o.cb)?o.cb:''; if(!keepImg) st.img=null; st.imgStat=null; st.cur=st.texts.length?0:-1; st.scur=0;
   if(typeof o.img==='string'&&o.img.startsWith('data:image/')){ try{ st.img=await imgFromUrl(o.img); }catch(e){} }
   if(st.rsrc==='color'&&!st.colGroups&&!st.img) st.rsrc='sil';
   if(!SHAPES[st.shape]&&!(st.shape==='image'&&st.imgPaths)) st.shape='heart';
   st.sws.forEach(w=>{ const ok=w.cap==='none'||(w.cap==='body'&&st.sws.length===1)||!!SHAPES[w.cap]||(w.cap==='image'&&st.imgPaths); if(!ok) w.cap='rect'; });
   $('c-trim').checked=st.trim; $('c-inv').checked=st.inv;
-  await Promise.all(st.texts.map(traceText)); syncUI(); lastFit=''; rebuild(); return true; }
+  await Promise.all(st.texts.map(traceText)); syncUI(); if(!keepImg) lastFit=''; rebuild(); return true; }
+const HIST={stack:[],i:-1,busy:false,t:0};
+function histRecord(){ const js=JSON.stringify(snapshot(false,true)); HIST.t=0; if(HIST.stack[HIST.i]===js) return; HIST.stack=HIST.stack.slice(0,HIST.i+1); HIST.stack.push(js); if(HIST.stack.length>100) HIST.stack.shift(); HIST.i=HIST.stack.length-1; histUI(); }
+function histPush(){ if(HIST.busy) return; clearTimeout(HIST.t); HIST.t=setTimeout(histRecord,450); } // a slider drag becomes one step
+function histUI(){ $('undoBtn').disabled=HIST.i<=0; $('redoBtn').disabled=HIST.i>=HIST.stack.length-1; }
+async function histGo(d){ if(HIST.busy) return; if(HIST.t){ clearTimeout(HIST.t); histRecord(); } const j=HIST.i+d; if(j<0||j>=HIST.stack.length) return;
+  HIST.i=j; HIST.busy=true; try{ await applyProject(JSON.parse(HIST.stack[j]),true); } finally{ setTimeout(()=>{ HIST.busy=false; },0); } histUI(); }
+$('undoBtn').onclick=()=>histGo(-1); $('redoBtn').onclick=()=>histGo(1);
+document.addEventListener('keydown',e=>{ if(!(e.ctrlKey||e.metaKey)||e.altKey) return; const t=e.target, typing=t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&!['range','checkbox','color','button','file'].includes(t.type)));
+  if(typing) return; if(e.code==='KeyZ'){ e.preventDefault(); histGo(e.shiftKey?1:-1); } else if(e.code==='KeyY'){ e.preventDefault(); histGo(1); } });
 let saveT=0; function autosave(){ clearTimeout(saveT); saveT=setTimeout(()=>{ LS.set('clicker.current',snapshot(!!st.img&&st.img.small.length<350000))||LS.set('clicker.current',snapshot(false)); },700); }
 function listProjects(){ const box=$('projList'), all=LS.get('clicker.projects')||[]; box.textContent='';
   all.forEach((pr,i)=>{ const r=document.createElement('div'); r.className='prow';
@@ -981,11 +1072,11 @@ document.querySelectorAll('.controls>section>h2').forEach((h,i)=>{ const sec=h.p
   const set=c=>{ sec.classList.toggle('closed',c); h.setAttribute('aria-expanded',String(!c)); }; set(window.matchMedia('(max-width:820px)').matches&&i>0);
   h.onclick=()=>set(!sec.classList.contains('closed')); h.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); h.onclick(); } }; });
 
-window.__clicker={bodyTexture,decorGroups,snapshot,applyProject,encodeLink,decodeLink,uni,off,ex,get orbit(){return orbit;},draw,buildOutline,swPos,fits,pts,pole,addSwitch,state:st,traceText,schedule,syncUI,get model(){return model;},buildModel,exportZip,takeFile};
+window.__clicker={histGo,get hist(){return HIST;},exportBuild:()=>{ FIXT=true; try{ return buildModel(st,false); } finally{ FIXT=false; } },bodyTexture,decorGroups,snapshot,applyProject,encodeLink,decodeLink,uni,off,ex,get orbit(){return orbit;},draw,buildOutline,swPos,fits,pts,pole,addSwitch,state:st,traceText,schedule,syncUI,get model(){return model;},buildModel,exportZip,takeFile};
 syncUI(); rebuild(); listProjects();
 (async()=>{ await Promise.all(st.texts.map(traceText)); schedule();
   if(!(await loadFromHash())){ const cur=LS.get('clicker.current'); if(cur) await applyProject(cur); }
-  booted=true;
+  booted=true; histRecord();
   if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ st.texts.forEach(t=>{ t._key=''; }); return Promise.all(st.texts.map(traceText)); }).then(schedule); })();
 })();
 </script>
